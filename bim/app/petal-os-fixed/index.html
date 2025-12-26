@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PéTAL OS — v329.2</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f5f5f5;
+      --bg-module: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #4a4a4a;
+      --text-muted: #717171;
+      --accent: #2563eb;
+      --accent-light: #3b82f6;
+      --accent-soft: rgba(37, 99, 235, 0.08);
+      --success: #059669;
+      --warning: #d97706;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-strong: rgba(0, 0, 0, 0.15);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --transition: 0.2s ease;
+    }
+
+    .theme-dark {
+      --bg-primary: #111111;
+      --bg-secondary: #1a1a1a;
+      --bg-tertiary: #222222;
+      --bg-module: #1a1a1a;
+      --text-primary: #f5f5f5;
+      --text-secondary: #a0a0a0;
+      --text-muted: #666666;
+      --accent: #60a5fa;
+      --accent-light: #93c5fd;
+      --accent-soft: rgba(96, 165, 250, 0.1);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.15);
+    }
+
+    .theme-warm {
+      --bg-primary: #fef7ed;
+      --bg-secondary: #fffbf5;
+      --bg-tertiary: #fef3e2;
+      --bg-module: #fffbf5;
+      --text-primary: #292524;
+      --text-secondary: #57534e;
+      --text-muted: #78716c;
+      --accent: #ea580c;
+      --accent-light: #f97316;
+      --accent-soft: rgba(234, 88, 12, 0.08);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 16px; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background 0.2s, color 0.2s;
+      line-height: 1.6;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    h1, h2, h3 { font-family: 'Merriweather', Georgia, serif; font-weight: 700; }
+
+    /* System Bar */
+    .system-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sys-brand { display: flex; align-items: center; gap: 8px; }
+    .sys-brand h1 { font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600; }
+    .sys-version { font-size: 10px; padding: 2px 8px; background: var(--accent-soft); color: var(--accent); border-radius: 20px; }
+    .sys-status { font-size: 12px; color: var(--text-muted); display: none; }
+    .sys-actions { display: flex; gap: 8px; }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .btn:active { transform: scale(0.97); }
+    .btn-icon { padding: 8px; }
+
+    /* Layout */
+    .layout { flex: 1; display: flex; flex-direction: column; }
+
+    /* Nav Panel - Mobile */
+    .nav-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 200;
+      background: var(--bg-secondary);
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-panel.is-open { transform: translateX(0); }
+
+    .nav-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-header h2 { font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600; color: var(--text-muted); }
+    
+    .nav-close {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: var(--text-muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    .nav-list { flex: 1; overflow-y: auto; padding: 8px 0; list-style: none; }
+    
+    .nav-item {
+      padding: 14px 20px;
+      font-size: 15px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item.is-active {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-left-color: var(--accent);
+      font-weight: 500;
+    }
+
+    .nav-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 150;
+      background: rgba(0,0,0,0.4);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s;
+    }
+
+    .nav-overlay.is-visible { opacity: 1; visibility: visible; }
+
+    /* Module View */
+    .module-view {
+      flex: 1;
+      background: var(--bg-tertiary);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .module-content { padding: 16px; }
+
+    /* Meta Panel */
+    .meta-panel {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+    }
+
+    .meta-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .meta-header h2 { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+    
+    .meta-toggle {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.3s;
+    }
+
+    .meta-panel.is-collapsed .meta-toggle { transform: rotate(180deg); }
+
+    .meta-content {
+      padding: 0 16px 16px;
+      max-height: 300px;
+      overflow-y: auto;
+      transition: max-height 0.3s, padding 0.3s;
+    }
+
+    .meta-panel.is-collapsed .meta-content {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      overflow: hidden;
+    }
+
+    .meta-content p { font-size: 14px; color: var(--text-secondary); margin-bottom: 8px; }
+    .meta-content .highlight { color: var(--accent); font-weight: 600; }
+
+    /* Desktop */
+    @media (min-width: 768px) {
+      .sys-status { display: block; }
+      .btn-icon.menu-toggle { display: none; }
+      .nav-overlay { display: none; }
+      
+      .layout { flex-direction: row; height: calc(100vh - 53px); }
+      
+      .nav-panel {
+        position: relative;
+        transform: none;
+        width: 200px;
+        flex-shrink: 0;
+        border-right: 1px solid var(--border);
+      }
+      
+      .nav-close { display: none; }
+      .meta-panel { width: 280px; flex-shrink: 0; border-top: none; border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+      .meta-header { cursor: default; }
+      .meta-toggle { display: none; }
+      .meta-content { flex: 1; max-height: none; overflow-y: auto; padding: 16px; }
+    }
+
+    /* Custom Panel */
+    .custom-panel { margin-top: 12px; }
+    .custom-section { margin-bottom: 12px; }
+    .custom-section > label { display: block; font-size: 11px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    
+    .custom-section select,
+    .custom-section textarea {
+      width: 100%;
+      padding: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      -webkit-appearance: none;
+    }
+
+    .custom-section textarea { min-height: 60px; resize: vertical; }
+    
+    .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    .checkbox-group label { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); cursor: pointer; }
+    .checkbox-group input { width: 16px; height: 16px; }
+
+    /* Module Accueil */
+    .mod-accueil { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 60vh; padding: 32px 16px; }
+    .mod-accueil .logo { font-size: 48px; margin-bottom: 16px; }
+    .mod-accueil h2 { font-size: 28px; margin-bottom: 8px; }
+    .mod-accueil p { color: var(--text-secondary); max-width: 300px; }
+    .mod-accueil .version-badge { margin-top: 24px; padding: 8px 16px; background: var(--accent-soft); border-radius: 20px; font-size: 13px; color: var(--accent); }
+
+    /* Module Perception */
+    .mod-perception .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 3px; }
+    .mod-perception .cell { aspect-ratio: 1; background: var(--bg-module); border-radius: 4px; border: 1px solid var(--border); }
+    .mod-perception .cell.active { background: var(--accent); }
+
+    /* Module Mémoire */
+    .mod-memoire { max-width: 500px; margin: 0 auto; }
+    .mod-memoire .memory { padding: 16px 0; border-bottom: 1px solid var(--border); }
+    .mod-memoire .memory-date { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+    .mod-memoire .memory-text { font-family: 'Merriweather', serif; font-size: 16px; font-style: italic; color: var(--text-secondary); margin-top: 4px; }
+    .mod-memoire input { width: 100%; margin-top: 16px; padding: 12px; background: var(--bg-module); border: 1px solid var(--border-strong); border-radius: var(--radius); font-size: 14px; color: var(--text-primary); }
+
+    /* Module Créativité */
+    .mod-reverie { position: relative; min-height: 400px; background: var(--bg-module); border-radius: var(--radius); overflow: hidden; }
+    .mod-reverie canvas { width: 100%; height: 400px; display: block; touch-action: none; }
+    .mod-reverie .hint { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); font-size: 12px; color: var(--text-muted); background: var(--bg-module); padding: 8px 16px; border-radius: 20px; }
+
+    /* Module Écho */
+    .mod-echo { max-width: 700px; margin: 0 auto; }
+    
+    .echo-input-area { text-align: center; margin-bottom: 24px; }
+    .echo-input-area input {
+      width: 100%;
+      padding: 14px 20px;
+      font-size: 16px;
+      background: var(--bg-module);
+      border: 2px solid var(--border-strong);
+      border-radius: 50px;
+      color: var(--text-primary);
+      text-align: center;
+    }
+    .echo-input-area input:focus { outline: none; border-color: var(--accent); }
+    .echo-input-area .hint { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+    .echo-cards { display: flex; flex-direction: column; gap: 16px; }
+
+    .echo-card {
+      background: var(--bg-module);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .card-title { font-family: 'Merriweather', serif; font-size: 18px; }
+    .card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .card-date { font-size: 11px; color: var(--text-muted); font-family: monospace; }
+    .card-badge { font-size: 10px; padding: 2px 8px; background: var(--success); color: white; border-radius: 20px; }
+    .card-actions { display: flex; gap: 8px; margin-top: 8px; }
+    .card-btn { padding: 8px 12px; font-size: 12px; background: var(--bg-module); border: 1px solid var(--border-strong); border-radius: 6px; color: var(--text-secondary); cursor: pointer; }
+
+    .card-preview { background: var(--bg-tertiary); min-height: 200px; }
+    .card-preview iframe { width: 100%; height: 220px; border: none; }
+
+    .card-info { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 16px; }
+    .info-item { text-align: center; padding: 8px; background: var(--bg-tertiary); border-radius: 6px; }
+    .info-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
+    .info-value { font-size: 12px; font-weight: 500; margin-top: 2px; }
+
+    .card-sources { padding: 12px 16px; background: var(--bg-tertiary); border-top: 1px solid var(--border); }
+    .card-sources-title { font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
+    .card-sources-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .source-tag { font-size: 11px; padding: 4px 8px; background: var(--bg-module); border: 1px solid var(--border); border-radius: 4px; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1000;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.is-open { opacity: 1; visibility: visible; }
+
+    .modal {
+      background: var(--bg-module);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 800px;
+      max-height: 90vh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: var(--bg-module);
+      z-index: 10;
+    }
+
+    .modal-title { font-size: 18px; }
+    
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      background: var(--bg-tertiary);
+      border: none;
+      border-radius: 50%;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .modal-body { padding: 16px; }
+    .modal-section { margin-bottom: 16px; }
+    .modal-section h3 { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; }
+    
+    .modal textarea {
+      width: 100%;
+      min-height: 200px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text-primary);
+      resize: vertical;
+    }
+
+    .modal-preview { background: white; border-radius: var(--radius); overflow: hidden; }
+    .modal-preview iframe { width: 100%; height: 300px; border: none; }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      position: sticky;
+      bottom: 0;
+      background: var(--bg-module);
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+    }
+
+    .modal-btn.primary { background: var(--accent); color: white; }
+    .modal-btn.secondary { background: var(--bg-tertiary); color: var(--text-secondary); }
+  </style>
+</head>
+
+<body>
+
+  <header class="system-bar">
+    <div class="sys-brand">
+      <h1>PéTAL OS</h1>
+      <span class="sys-version">v329.2</span>
+      <span class="sys-status" id="sysStatus">— prêt</span>
+    </div>
+    <div class="sys-actions">
+      <button class="btn" onclick="cycleTheme()" id="themeBtn">☀️</button>
+      <button class="btn btn-icon menu-toggle" onclick="toggleNav()">☰</button>
+    </div>
+  </header>
+
+  <div class="nav-overlay" id="navOverlay"></div>
+
+  <main class="layout">
+    <aside class="nav-panel" id="navPanel">
+      <div class="nav-header">
+        <h2>MODULES</h2>
+        <button class="nav-close" onclick="closeNav()">×</button>
+      </div>
+      <ul class="nav-list" id="moduleList"></ul>
+    </aside>
+
+    <section class="module-view">
+      <div class="module-content" id="moduleContent"></div>
+    </section>
+
+    <aside class="meta-panel" id="metaPanel">
+      <div class="meta-header" onclick="toggleMeta()">
+        <h2>PARAMÈTRES</h2>
+        <div class="meta-toggle">▲</div>
+      </div>
+      <div class="meta-content" id="metaContent">
+        <p>Sélectionne un module.</p>
+      </div>
+    </aside>
+  </main>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Éditeur</h2>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <h3>CODE HTML</h3>
+          <textarea id="modalCode"></textarea>
+        </div>
+        <div class="modal-section">
+          <h3>PRÉVISUALISATION</h3>
+          <div class="modal-preview">
+            <iframe id="modalPreview"></iframe>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="refreshPreview()">🔄 Rafraîchir</button>
+        <button class="modal-btn primary" onclick="downloadHtml()">💾 Télécharger</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ══════════════════════════════════════════════════════════════
+    // STATE
+    // ══════════════════════════════════════════════════════════════
+    var generatedSites = [];
+    var currentEditIndex = -1;
+    var currentModule = null;
+    var currentTheme = 0;
+    var themes = ['', 'theme-dark', 'theme-warm'];
+    var themeIcons = ['☀️', '🌙', '🍂'];
+
+    var userConfig = {
+      audience: 'adulte',
+      detail: 'standard',
+      tone: 'pedagogique',
+      context: '',
+      sections: {
+        intro: true,
+        wiki: true,
+        points: true,
+        timeline: true,
+        chiffres: true,
+        pourquoi: true,
+        myths: false,
+        glossaire: false,
+        sources: true,
+        quiz: true
+      }
+    };
+
+    // ══════════════════════════════════════════════════════════════
+    // MODULES CONFIG
+    // ══════════════════════════════════════════════════════════════
+    var MODULES = [
+      {
+        id: 'accueil',
+        name: 'Accueil',
+        description: '<p><span class="highlight">PéTAL OS</span> — Plateforme Éducative.</p><p>Version 329.2</p>',
+        render: renderAccueil
+      },
+      {
+        id: 'perception',
+        name: 'Perception',
+        description: '<p><span class="highlight">Perception</span> — Grille interactive.</p>',
+        render: renderPerception
+      },
+      {
+        id: 'memoire',
+        name: 'Mémoire',
+        description: '<p><span class="highlight">Mémoire</span> — Notes.</p>',
+        render: renderMemoire
+      },
+      {
+        id: 'reverie',
+        name: 'Créativité',
+        description: '<p><span class="highlight">Créativité</span> — Canvas.</p>',
+        render: renderReverie,
+        init: initCanvas
+      },
+      {
+        id: 'echo',
+        name: 'Générateur',
+        description: getEchoDescription(),
+        render: renderEcho
+      }
+    ];
+
+    function getEchoDescription() {
+      return '<p><span class="highlight">Générateur</span></p>' +
+        '<div class="custom-panel">' +
+        '<div class="custom-section"><label>🎯 Public</label>' +
+        '<select id="targetAudience" onchange="updateConfig()">' +
+        '<option value="enfant">Enfants</option>' +
+        '<option value="ado">Ados</option>' +
+        '<option value="adulte" selected>Adultes</option>' +
+        '<option value="expert">Experts</option>' +
+        '</select></div>' +
+        '<div class="custom-section"><label>📚 Niveau</label>' +
+        '<select id="detailLevel" onchange="updateConfig()">' +
+        '<option value="essentiel">Essentiel</option>' +
+        '<option value="standard" selected>Standard</option>' +
+        '<option value="complet">Complet</option>' +
+        '</select></div>' +
+        '<div class="custom-section"><label>📑 Sections</label>' +
+        '<div class="checkbox-group">' +
+        '<label><input type="checkbox" id="secIntro" checked onchange="updateConfig()"> Intro</label>' +
+        '<label><input type="checkbox" id="secWiki" checked onchange="updateConfig()"> Wiki</label>' +
+        '<label><input type="checkbox" id="secPoints" checked onchange="updateConfig()"> Points clés</label>' +
+        '<label><input type="checkbox" id="secTimeline" checked onchange="updateConfig()"> Timeline</label>' +
+        '<label><input type="checkbox" id="secSources" checked onchange="updateConfig()"> Sources</label>' +
+        '<label><input type="checkbox" id="secQuiz" checked onchange="updateConfig()"> Quiz</label>' +
+        '</div></div>' +
+        '<div class="custom-section"><label>🏷️ Contexte</label>' +
+        '<textarea id="customContext" placeholder="Ex: Cours de SVT..." onchange="updateConfig()"></textarea></div>' +
+        '</div>';
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // RENDER FUNCTIONS
+    // ══════════════════════════════════════════════════════════════
+    function renderAccueil() {
+      return '<div class="mod-accueil">' +
+        '<div class="logo">📖</div>' +
+        '<h2>Bienvenue</h2>' +
+        '<p>Génère des fiches éducatives avec sources officielles.</p>' +
+        '<div class="version-badge">v329.2</div>' +
+        '</div>';
+    }
+
+    function renderPerception() {
+      var html = '<div class="mod-perception"><div class="grid">';
+      for (var i = 0; i < 100; i++) {
+        html += '<div class="cell" onclick="this.classList.toggle(\'active\')"></div>';
+      }
+      html += '</div></div>';
+      return html;
+    }
+
+    function renderMemoire() {
+      return '<div class="mod-memoire">' +
+        '<div class="memory"><div class="memory-date">2024-03-15</div><div class="memory-text">Apprendre, c\'est découvrir.</div></div>' +
+        '<div class="memory"><div class="memory-date">2024-02-28</div><div class="memory-text">La connaissance grandit.</div></div>' +
+        '<input type="text" placeholder="Ajoute une note..." id="memoryInput">' +
+        '</div>';
+    }
+
+    function renderReverie() {
+      return '<div class="mod-reverie">' +
+        '<canvas id="dreamCanvas"></canvas>' +
+        '<div class="hint">Touche pour créer</div>' +
+        '</div>';
+    }
+
+    function renderEcho() {
+      var cardsHtml = '';
+      for (var i = 0; i < generatedSites.length; i++) {
+        cardsHtml += renderEchoCard(generatedSites[i], i);
+      }
+      return '<div class="mod-echo">' +
+        '<div class="echo-input-area">' +
+        '<input type="text" id="echoInput" placeholder="Entrez un sujet...">' +
+        '<div class="hint">Appuyez sur Entrée</div>' +
+        '</div>' +
+        '<div class="echo-cards" id="echoCards">' + cardsHtml + '</div>' +
+        '</div>';
+    }
+
+    function renderEchoCard(site, index) {
+      var sourceTags = '';
+      for (var i = 0; i < site.sources.length; i++) {
+        sourceTags += '<span class="source-tag">' + site.sources[i] + '</span>';
+      }
+
+      return '<div class="echo-card">' +
+        '<div class="card-header">' +
+        '<div class="card-title">' + site.subject + '</div>' +
+        '<div class="card-meta">' +
+        '<span class="card-date">' + site.date + '</span>' +
+        '<span class="card-badge">✓ Vérifié</span>' +
+        '</div>' +
+        '<div class="card-actions">' +
+        '<button class="card-btn" onclick="openEditor(' + index + ')">✏️ Éditer</button>' +
+        '<button class="card-btn" onclick="downloadSite(' + index + ')">💾 Export</button>' +
+        '</div>' +
+        '</div>' +
+        '<div class="card-preview">' +
+        '<iframe id="preview' + index + '" sandbox="allow-scripts"></iframe>' +
+        '</div>' +
+        '<div class="card-info">' +
+        '<div class="info-item"><div class="info-label">Public</div><div class="info-value">' + site.audience + '</div></div>' +
+        '<div class="info-item"><div class="info-label">Niveau</div><div class="info-value">' + site.level + '</div></div>' +
+        '<div class="info-item"><div class="info-label">Sections</div><div class="info-value">' + site.sectionCount + '</div></div>' +
+        '<div class="info-item"><div class="info-label">Quiz</div><div class="info-value">' + (site.hasQuiz ? 'Oui' : 'Non') + '</div></div>' +
+        '</div>' +
+        '<div class="card-sources">' +
+        '<div class="card-sources-title">Sources</div>' +
+        '<div class="card-sources-list">' + sourceTags + '</div>' +
+        '</div>' +
+        '</div>';
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // SITE GENERATOR
+    // ══════════════════════════════════════════════════════════════
+    function generateSite(subject) {
+      var now = new Date();
+      var wikiSlug = encodeURIComponent(subject.replace(/\s+/g, '_'));
+      var cfg = userConfig;
+
+      var audienceLabels = {
+        enfant: 'Enfants',
+        ado: 'Ados',
+        adulte: 'Adultes',
+        expert: 'Experts'
+      };
+
+      var intro = cfg.audience === 'enfant' 
+        ? 'Tu veux tout savoir sur <strong>' + subject + '</strong> ? Super !'
+        : '<strong>' + subject + '</strong> est un sujet important à comprendre.';
+
+      var sectionsHtml = '';
+
+      // Intro
+      if (cfg.sections.intro) {
+        sectionsHtml += '<section class="card"><h2>📖 Introduction</h2><p class="lead">' + intro + '</p>';
+        if (cfg.context) {
+          sectionsHtml += '<div class="context-box"><strong>📌 Contexte :</strong> ' + cfg.context + '</div>';
+        }
+        sectionsHtml += '</section>';
+      }
+
+      // Wiki
+      if (cfg.sections.wiki) {
+        sectionsHtml += '<section class="card"><h2>📚 Wikipédia</h2>' +
+          '<div class="wiki-embed">' +
+          '<p><strong>' + subject + '</strong> — Consultez l\'article complet pour plus d\'informations.</p>' +
+          '<a href="https://fr.wikipedia.org/wiki/' + wikiSlug + '" target="_blank" class="wiki-link">→ Lire sur Wikipédia</a>' +
+          '</div></section>';
+      }
+
+      // Points
+      if (cfg.sections.points) {
+        sectionsHtml += '<section class="card"><h2>✅ Points Essentiels</h2><ul class="key-points">' +
+          '<li><strong>Définition :</strong> Compréhension du sujet</li>' +
+          '<li><strong>Histoire :</strong> Origines et évolution</li>' +
+          '<li><strong>Aujourd\'hui :</strong> Applications actuelles</li>' +
+          '<li><strong>Demain :</strong> Perspectives futures</li>' +
+          '</ul></section>';
+      }
+
+      // Timeline
+      if (cfg.sections.timeline) {
+        sectionsHtml += '<section class="card"><h2>📅 Chronologie</h2><div class="timeline">' +
+          '<div class="timeline-item"><div class="timeline-date">🕐 Débuts</div><div class="timeline-content">Premières mentions</div></div>' +
+          '<div class="timeline-item"><div class="timeline-date">📈 Expansion</div><div class="timeline-content">Développement</div></div>' +
+          '<div class="timeline-item current"><div class="timeline-date">✨ Aujourd\'hui</div><div class="timeline-content">État actuel</div></div>' +
+          '</div></section>';
+      }
+
+      // Sources
+      if (cfg.sections.sources) {
+        sectionsHtml += '<section class="card"><h2>🔗 Sources Officielles</h2>' +
+          '<div class="sources-grid">' +
+          '<a href="https://fr.wikipedia.org/wiki/' + wikiSlug + '" target="_blank" class="source-card"><span class="source-icon">📚</span><div><div class="source-name">Wikipédia</div></div></a>' +
+          '<a href="https://www.service-public.fr" target="_blank" class="source-card"><span class="source-icon">🏛️</span><div><div class="source-name">Service Public</div></div></a>' +
+          '<a href="https://scholar.google.com/scholar?q=' + encodeURIComponent(subject) + '" target="_blank" class="source-card"><span class="source-icon">🎓</span><div><div class="source-name">Google Scholar</div></div></a>' +
+          '</div></section>';
+      }
+
+      // Quiz
+      if (cfg.sections.quiz) {
+        sectionsHtml += '<section class="card"><h2>🎯 Quiz</h2>' +
+          '<div class="quiz-container" id="quizContainer">' +
+          '<p class="quiz-question">Pourquoi vérifier ses sources ?</p>' +
+          '<div class="quiz-options">' +
+          '<button class="quiz-btn" onclick="checkQuiz(this, true)">Pour éviter les fake news</button>' +
+          '<button class="quiz-btn" onclick="checkQuiz(this, false)">Ce n\'est pas nécessaire</button>' +
+          '</div>' +
+          '</div></section>';
+      }
+
+      var html = '<!DOCTYPE html>' +
+        '<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">' +
+        '<title>' + subject + ' — Fiche Éducative</title>' +
+        '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">' +
+        '<style>' +
+        '*{margin:0;padding:0;box-sizing:border-box}' +
+        'body{font-family:Inter,sans-serif;background:#fafafa;color:#1a1a1a;line-height:1.6}' +
+        'header{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;padding:3rem 1.5rem;text-align:center}' +
+        '.badge{display:inline-block;padding:.25rem .75rem;background:rgba(255,255,255,.2);border-radius:20px;font-size:.75rem;margin-bottom:1rem}' +
+        'h1{font-family:Merriweather,serif;font-size:2rem;margin-bottom:.5rem}' +
+        'main{max-width:800px;margin:0 auto;padding:2rem 1rem}' +
+        '.card{background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:1.5rem;margin-bottom:1.5rem}' +
+        '.card h2{font-family:Merriweather,serif;color:#2563eb;margin-bottom:1rem}' +
+        '.card p{color:#4a4a4a;margin-bottom:1rem}' +
+        '.lead{font-size:1.1rem}' +
+        '.context-box{background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:1rem;margin:1rem 0}' +
+        '.wiki-embed{background:#f8f9fa;border:1px solid #a2a9b1;border-radius:8px;padding:1rem}' +
+        '.wiki-link{color:#3366cc;text-decoration:none}' +
+        '.key-points{list-style:none}' +
+        '.key-points li{padding:.75rem 0;padding-left:1.5rem;border-bottom:1px solid rgba(0,0,0,.1);position:relative}' +
+        '.key-points li:before{content:"→";position:absolute;left:0;color:#2563eb}' +
+        '.timeline{border-left:2px solid #2563eb;padding-left:1.5rem}' +
+        '.timeline-item{padding:1rem 0;position:relative}' +
+        '.timeline-item:before{content:"";position:absolute;left:-1.75rem;top:1.25rem;width:10px;height:10px;background:#2563eb;border-radius:50%}' +
+        '.timeline-item.current:before{background:#059669;box-shadow:0 0 0 4px rgba(5,150,105,.2)}' +
+        '.timeline-date{font-size:.75rem;font-weight:600;color:#2563eb}' +
+        '.timeline-content{color:#4a4a4a}' +
+        '.sources-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem}' +
+        '.source-card{display:flex;align-items:center;gap:.75rem;padding:.875rem;background:#fafafa;border:1px solid rgba(0,0,0,.1);border-radius:8px;text-decoration:none;color:#1a1a1a}' +
+        '.source-icon{font-size:1.5rem}' +
+        '.source-name{font-weight:600;font-size:.85rem}' +
+        '.quiz-container{background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1px solid #bae6fd;border-radius:12px;padding:1.5rem}' +
+        '.quiz-question{font-weight:600;margin-bottom:1rem}' +
+        '.quiz-options{display:flex;flex-direction:column;gap:.5rem}' +
+        '.quiz-btn{padding:.75rem 1rem;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:8px;cursor:pointer;text-align:left;font-size:.9rem}' +
+        '.quiz-btn.correct{background:#d1fae5;border-color:#059669}' +
+        '.quiz-btn.wrong{background:#fee2e2;border-color:#dc2626}' +
+        'footer{text-align:center;padding:2rem;color:#717171;font-size:.8rem;border-top:1px solid rgba(0,0,0,.1);margin-top:2rem}' +
+        'footer a{color:#2563eb;text-decoration:none}' +
+        '</style></head><body>' +
+        '<header><div class="badge">📚 Fiche Éducative — PéTAL OS v329.2</div>' +
+        '<h1>' + subject + '</h1></header>' +
+        '<main>' + sectionsHtml +
+        '<section class="card"><h2>📥 Actions</h2>' +
+        '<button onclick="window.print()" style="padding:.75rem 1.5rem;background:#2563eb;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ Imprimer</button>' +
+        '</section></main>' +
+        '<footer><p>Généré par <strong>PéTAL OS v329.2</strong></p>' +
+        '<p><a href="https://fr.wikipedia.org" target="_blank">Wikipédia</a> • <a href="https://www.service-public.fr" target="_blank">Service-Public.fr</a></p></footer>' +
+        '<script>function checkQuiz(btn,correct){var btns=document.querySelectorAll(".quiz-btn");for(var i=0;i<btns.length;i++){btns[i].disabled=true}btn.classList.add(correct?"correct":"wrong")}<\/script>' +
+        '</body></html>';
+
+      var sectionCount = 0;
+      if (cfg.sections.intro) sectionCount++;
+      if (cfg.sections.wiki) sectionCount++;
+      if (cfg.sections.points) sectionCount++;
+      if (cfg.sections.timeline) sectionCount++;
+      if (cfg.sections.sources) sectionCount++;
+      if (cfg.sections.quiz) sectionCount++;
+
+      return {
+        subject: subject,
+        date: now.toLocaleDateString('fr-FR'),
+        audience: audienceLabels[cfg.audience] || 'Adultes',
+        level: cfg.detail,
+        sectionCount: sectionCount,
+        hasQuiz: cfg.sections.quiz,
+        sources: ['📚 Wikipédia', '🏛️ Service Public', '🎓 Scholar'],
+        html: html
+      };
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // CONFIG
+    // ══════════════════════════════════════════════════════════════
+    function updateConfig() {
+      var el;
+      el = document.getElementById('targetAudience');
+      if (el) userConfig.audience = el.value;
+      
+      el = document.getElementById('detailLevel');
+      if (el) userConfig.detail = el.value;
+      
+      el = document.getElementById('customContext');
+      if (el) userConfig.context = el.value;
+
+      var sections = ['Intro', 'Wiki', 'Points', 'Timeline', 'Sources', 'Quiz'];
+      var keys = ['intro', 'wiki', 'points', 'timeline', 'sources', 'quiz'];
+      for (var i = 0; i < sections.length; i++) {
+        el = document.getElementById('sec' + sections[i]);
+        if (el) userConfig.sections[keys[i]] = el.checked;
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // NAVIGATION
+    // ══════════════════════════════════════════════════════════════
+    function toggleNav() {
+      document.getElementById('navPanel').classList.toggle('is-open');
+      document.getElementById('navOverlay').classList.toggle('is-visible');
+    }
+
+    function closeNav() {
+      document.getElementById('navPanel').classList.remove('is-open');
+      document.getElementById('navOverlay').classList.remove('is-visible');
+    }
+
+    function toggleMeta() {
+      if (window.innerWidth < 768) {
+        document.getElementById('metaPanel').classList.toggle('is-collapsed');
+      }
+    }
+
+    function cycleTheme() {
+      currentTheme = (currentTheme + 1) % 3;
+      document.body.className = themes[currentTheme];
+      document.getElementById('themeBtn').textContent = themeIcons[currentTheme];
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // MODULES
+    // ══════════════════════════════════════════════════════════════
+    function loadModule(moduleId) {
+      var mod = null;
+      for (var i = 0; i < MODULES.length; i++) {
+        if (MODULES[i].id === moduleId) {
+          mod = MODULES[i];
+          break;
+        }
+      }
+      if (!mod) return;
+
+      currentModule = mod;
+
+      var items = document.querySelectorAll('.nav-item');
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].getAttribute('data-id') === moduleId) {
+          items[i].classList.add('is-active');
+        } else {
+          items[i].classList.remove('is-active');
+        }
+      }
+
+      document.getElementById('moduleContent').innerHTML = mod.render();
+      document.getElementById('metaContent').innerHTML = typeof mod.description === 'function' ? mod.description() : mod.description;
+      document.getElementById('sysStatus').textContent = '— ' + mod.name;
+
+      closeNav();
+
+      if (mod.init) {
+        setTimeout(mod.init, 100);
+      }
+
+      // Setup event listeners
+      if (moduleId === 'echo') {
+        setTimeout(function() {
+          var input = document.getElementById('echoInput');
+          if (input) {
+            input.addEventListener('keypress', function(e) {
+              if (e.key === 'Enter' || e.keyCode === 13) {
+                var subject = this.value.trim();
+                if (subject) {
+                  updateConfig();
+                  var site = generateSite(subject);
+                  generatedSites.unshift(site);
+                  loadModule('echo');
+                  
+                  // Load iframe content after render
+                  setTimeout(function() {
+                    var iframe = document.getElementById('preview0');
+                    if (iframe) {
+                      iframe.srcdoc = site.html;
+                    }
+                  }, 100);
+                }
+                this.value = '';
+              }
+            });
+          }
+          
+          // Load existing previews
+          for (var i = 0; i < generatedSites.length; i++) {
+            var iframe = document.getElementById('preview' + i);
+            if (iframe) {
+              iframe.srcdoc = generatedSites[i].html;
+            }
+          }
+        }, 100);
+      }
+
+      if (moduleId === 'memoire') {
+        setTimeout(function() {
+          var input = document.getElementById('memoryInput');
+          if (input) {
+            input.addEventListener('keypress', function(e) {
+              if (e.key === 'Enter' || e.keyCode === 13) {
+                if (this.value.trim()) {
+                  var container = document.querySelector('.mod-memoire');
+                  var memory = document.createElement('div');
+                  memory.className = 'memory';
+                  memory.innerHTML = '<div class="memory-date">' + new Date().toISOString().split('T')[0] + '</div><div class="memory-text">' + this.value + '</div>';
+                  container.insertBefore(memory, this);
+                  this.value = '';
+                }
+              }
+            });
+          }
+        }, 100);
+      }
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // CANVAS
+    // ══════════════════════════════════════════════════════════════
+    function initCanvas() {
+      var canvas = document.getElementById('dreamCanvas');
+      if (!canvas) return;
+
+      var ctx = canvas.getContext('2d');
+      var particles = [];
+      var mouse = { x: 0, y: 0 };
+      var hue = 210;
+
+      function resize() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+      }
+
+      resize();
+      mouse.x = canvas.width / 2;
+      mouse.y = canvas.height / 2;
+
+      function Particle(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = Math.random() * 3 + 1;
+        this.speedX = (Math.random() - 0.5) * 2;
+        this.speedY = (Math.random() - 0.5) * 2;
+        this.life = 1;
+        this.hue = hue + Math.random() * 30;
+      }
+
+      Particle.prototype.update = function() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.life -= 0.01;
+        this.size *= 0.99;
+      };
+
+      Particle.prototype.draw = function() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = 'hsla(' + this.hue + ', 50%, 50%, ' + this.life + ')';
+        ctx.fill();
+      };
+
+      function animate() {
+        ctx.fillStyle = 'rgba(250, 250, 250, 0.1)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (var i = 0; i < 2; i++) {
+          particles.push(new Particle(
+            mouse.x + (Math.random() - 0.5) * 40,
+            mouse.y + (Math.random() - 0.5) * 40
+          ));
+        }
+
+        var newParticles = [];
+        for (var i = 0; i < particles.length; i++) {
+          particles[i].update();
+          particles[i].draw();
+          if (particles[i].life > 0) {
+            newParticles.push(particles[i]);
+          }
+        }
+        particles = newParticles;
+
+        hue = (hue + 0.1) % 360;
+        requestAnimationFrame(animate);
+      }
+
+      canvas.addEventListener('mousemove', function(e) {
+        var rect = canvas.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left;
+        mouse.y = e.clientY - rect.top;
+      });
+
+      canvas.addEventListener('touchmove', function(e) {
+        e.preventDefault();
+        var rect = canvas.getBoundingClientRect();
+        mouse.x = e.touches[0].clientX - rect.left;
+        mouse.y = e.touches[0].clientY - rect.top;
+      }, { passive: false });
+
+      window.addEventListener('resize', resize);
+      animate();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // MODAL
+    // ══════════════════════════════════════════════════════════════
+    function openEditor(index) {
+      currentEditIndex = index;
+      var site = generatedSites[index];
+      document.getElementById('modalTitle').textContent = site.subject;
+      document.getElementById('modalCode').value = site.html;
+      document.getElementById('modalPreview').srcdoc = site.html;
+      document.getElementById('modalOverlay').classList.add('is-open');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('is-open');
+      if (currentEditIndex >= 0) {
+        generatedSites[currentEditIndex].html = document.getElementById('modalCode').value;
+      }
+      currentEditIndex = -1;
+    }
+
+    function refreshPreview() {
+      var code = document.getElementById('modalCode').value;
+      document.getElementById('modalPreview').srcdoc = code;
+    }
+
+    function downloadHtml() {
+      var code = document.getElementById('modalCode').value;
+      var subject = currentEditIndex >= 0 ? generatedSites[currentEditIndex].subject : 'fiche';
+      var blob = new Blob([code], { type: 'text/html' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = subject.toLowerCase().replace(/\s+/g, '-') + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadSite(index) {
+      var site = generatedSites[index];
+      var blob = new Blob([site.html], { type: 'text/html' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = site.subject.toLowerCase().replace(/\s+/g, '-') + '.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // INIT
+    // ══════════════════════════════════════════════════════════════
+    function init() {
+      var list = document.getElementById('moduleList');
+      for (var i = 0; i < MODULES.length; i++) {
+        var li = document.createElement('li');
+        li.className = 'nav-item';
+        li.textContent = MODULES[i].name;
+        li.setAttribute('data-id', MODULES[i].id);
+        (function(id) {
+          li.addEventListener('click', function() {
+            loadModule(id);
+          });
+        })(MODULES[i].id);
+        list.appendChild(li);
+      }
+
+      document.getElementById('navOverlay').addEventListener('click', closeNav);
+      document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeModal();
+      });
+
+      loadModule('accueil');
+    }
+
+    // Start
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</body>
+</html>
