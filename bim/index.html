@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PéTAL OS — v329.2</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-primary: #fafafa;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #f5f5f5;
+      --bg-module: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #4a4a4a;
+      --text-muted: #717171;
+      --accent: #2563eb;
+      --accent-light: #3b82f6;
+      --accent-soft: rgba(37, 99, 235, 0.08);
+      --success: #059669;
+      --warning: #d97706;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-strong: rgba(0, 0, 0, 0.15);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --font-display: 'Merriweather', Georgia, serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
+      --nav-item-padding: 0.75rem 1.25rem;
+      --transition: 0.2s ease;
+    }
+
+    .theme-dark {
+      --bg-primary: #111111;
+      --bg-secondary: #1a1a1a;
+      --bg-tertiary: #222222;
+      --bg-module: #1a1a1a;
+      --text-primary: #f5f5f5;
+      --text-secondary: #a0a0a0;
+      --text-muted: #666666;
+      --accent: #60a5fa;
+      --accent-light: #93c5fd;
+      --accent-soft: rgba(96, 165, 250, 0.1);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-strong: rgba(255, 255, 255, 0.15);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .theme-warm {
+      --bg-primary: #fef7ed;
+      --bg-secondary: #fffbf5;
+      --bg-tertiary: #fef3e2;
+      --bg-module: #fffbf5;
+      --text-primary: #292524;
+      --text-secondary: #57534e;
+      --text-muted: #78716c;
+      --accent: #ea580c;
+      --accent-light: #f97316;
+      --accent-soft: rgba(234, 88, 12, 0.08);
+      --border: rgba(0, 0, 0, 0.06);
+      --border-strong: rgba(0, 0, 0, 0.12);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      transition: background var(--transition), color var(--transition);
+      line-height: 1.6;
+    }
+    h1, h2, h3 { font-family: var(--font-display); font-weight: 700; line-height: 1.3; }
+
+    .system-bar {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1.25rem;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+    .sys-brand { display: flex; align-items: center; gap: 0.75rem; }
+    .sys-brand h1 { font-family: var(--font-body); font-size: 1rem; font-weight: 600; }
+    .sys-version { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: var(--accent-soft); color: var(--accent); border-radius: 20px; font-weight: 500; }
+    .sys-status { font-size: 0.75rem; color: var(--text-muted); }
+    .sys-actions { display: flex; align-items: center; gap: 0.5rem; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.375rem;
+      padding: 0.5rem 0.875rem;
+      font-family: inherit; font-size: 0.8125rem; font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .btn:hover { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+    .btn:active { transform: scale(0.97); }
+    .btn-icon { width: 2.25rem; padding: 0.5rem; }
+    .menu-toggle { display: flex; }
+
+    .layout { flex: 1; display: flex; flex-direction: column; }
+
+    .nav-panel {
+      position: fixed; inset: 0; z-index: 200;
+      background: var(--bg-secondary);
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      display: flex; flex-direction: column;
+      box-shadow: var(--shadow-lg);
+    }
+    .nav-panel.is-open { transform: translateX(0); }
+    .nav-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .nav-header h2 { font-family: var(--font-body); font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+    .nav-close { width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; font-size: 1.25rem; color: var(--text-muted); background: none; border: none; cursor: pointer; border-radius: var(--radius); }
+    .nav-close:hover { background: var(--accent-soft); color: var(--accent); }
+    .nav-list { flex: 1; overflow-y: auto; padding: 0.5rem 0; list-style: none; }
+    .nav-item { padding: var(--nav-item-padding); font-size: 0.9rem; color: var(--text-secondary); cursor: pointer; transition: all var(--transition); border-left: 3px solid transparent; }
+    .nav-item:hover { background: var(--accent-soft); color: var(--text-primary); }
+    .nav-item.is-active { background: var(--accent-soft); color: var(--accent); border-left-color: var(--accent); font-weight: 500; }
+    .nav-overlay { position: fixed; inset: 0; z-index: 150; background: rgba(0,0,0,0.3); opacity: 0; visibility: hidden; transition: all 0.3s; }
+    .nav-overlay.is-visible { opacity: 1; visibility: visible; }
+
+    .module-view { flex: 1; min-height: 50vh; background: var(--bg-tertiary); position: relative; overflow: auto; }
+    .module-content { padding: 1.5rem; height: 100%; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .meta-panel { background: var(--bg-secondary); border-top: 1px solid var(--border); }
+    .meta-header { display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .meta-header h2 { font-family: var(--font-body); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+    .meta-toggle { width: 1.5rem; height: 1.5rem; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: transform 0.3s; }
+    .meta-panel.is-collapsed .meta-toggle { transform: rotate(180deg); }
+    .meta-content { padding: 1rem; max-height: 50vh; overflow-y: auto; transition: all 0.3s; }
+    .meta-panel.is-collapsed .meta-content { max-height: 0; padding-top: 0; padding-bottom: 0; overflow: hidden; }
+    .meta-content p { font-size: 0.875rem; line-height: 1.7; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .meta-content .highlight { color: var(--accent); font-weight: 600; }
+
+    @media (min-width: 768px) {
+      .menu-toggle { display: none; }
+      .nav-overlay { display: none; }
+      .layout { flex-direction: row; height: calc(100dvh - 53px); }
+      .nav-panel { position: relative; transform: none; width: 200px; min-width: 200px; border-right: 1px solid var(--border); box-shadow: none; }
+      .nav-close { display: none; }
+      .module-view { min-height: auto; }
+      .meta-panel { width: 280px; min-width: 280px; border-top: none; border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+      .meta-header { cursor: default; }
+      .meta-toggle { display: none; }
+      .meta-content { flex: 1; max-height: none; overflow-y: auto; }
+    }
+
+    @media (min-width: 1200px) {
+      .meta-panel { width: 320px; min-width: 320px; }
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+    ::selection { background: var(--accent); color: white; }
+
+    /* Panneau de personnalisation */
+    .custom-panel { margin-top: 0.75rem; }
+    .custom-section { margin-bottom: 0.875rem; }
+    .custom-section > label { display: block; font-size: 0.7rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .custom-section select, .custom-section textarea {
+      width: 100%; padding: 0.4rem 0.5rem; font-size: 0.75rem; font-family: inherit;
+      background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; color: var(--text-primary);
+    }
+    .custom-section select:focus, .custom-section textarea:focus { outline: none; border-color: var(--accent); }
+    .custom-section textarea { min-height: 50px; resize: vertical; }
+    .checkbox-group { display: grid; grid-template-columns: 1fr 1fr; gap: 0.25rem; }
+    .checkbox-group label { display: flex; align-items: center; gap: 0.35rem; font-size: 0.7rem; font-weight: 400; cursor: pointer; color: var(--text-secondary); }
+    .checkbox-group input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--accent); }
+
+    /* Module Accueil */
+    .mod-accueil { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; min-height: 100%; padding: 2rem; }
+    .mod-accueil .logo { font-size: 3rem; margin-bottom: 1rem; }
+    .mod-accueil h2 { font-size: 1.75rem; margin-bottom: 0.5rem; }
+    .mod-accueil p { color: var(--text-secondary); max-width: 400px; }
+    .mod-accueil .version-badge { margin-top: 1.5rem; padding: 0.5rem 1rem; background: var(--accent-soft); border-radius: 20px; font-size: 0.8rem; color: var(--accent); font-weight: 500; }
+
+    /* Module Perception */
+    .mod-perception .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 3px; }
+    .mod-perception .cell { aspect-ratio: 1; background: var(--bg-module); border-radius: 4px; cursor: crosshair; transition: all 0.15s; border: 1px solid var(--border); }
+    .mod-perception .cell:hover { background: var(--accent); transform: scale(1.05); }
+    .mod-perception .cell.active { background: var(--accent); }
+
+    /* Module Mémoire */
+    .mod-memoire { max-width: 550px; margin: 0 auto; }
+    .mod-memoire .memory { padding: 1rem 0; border-bottom: 1px solid var(--border); }
+    .mod-memoire .memory-date { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.25rem; font-family: var(--font-mono); }
+    .mod-memoire .memory-text { font-family: var(--font-display); font-size: 1.1rem; font-style: italic; color: var(--text-secondary); }
+    .mod-memoire input { width: 100%; margin-top: 1rem; padding: 0.75rem 1rem; background: var(--bg-module); border: 1px solid var(--border-strong); border-radius: var(--radius); color: var(--text-primary); font-family: inherit; font-size: 0.9rem; }
+    .mod-memoire input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+
+    /* Module Rêverie */
+    .mod-reverie { position: absolute; inset: 0; padding: 0 !important; }
+    .mod-reverie canvas { width: 100%; height: 100%; display: block; }
+    .mod-reverie .hint { position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%); font-size: 0.75rem; color: var(--text-muted); background: var(--bg-module); padding: 0.5rem 1rem; border-radius: 20px; box-shadow: var(--shadow-md); }
+
+    /* Module Écho */
+    .mod-echo { padding: 0.5rem; }
+    .echo-input-area { max-width: 600px; margin: 0 auto 1.5rem; text-align: center; }
+    .echo-input-area input {
+      width: 100%; padding: 0.875rem 1.25rem; font-size: 1rem;
+      background: var(--bg-module); border: 2px solid var(--border-strong); border-radius: 50px;
+      color: var(--text-primary); text-align: center; box-shadow: var(--shadow-sm); transition: all 0.2s;
+    }
+    .echo-input-area input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+    .echo-input-area input::placeholder { color: var(--text-muted); }
+    .echo-input-area .hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; }
+
+    .echo-cards { display: grid; gap: 1rem; }
+    .echo-card { background: var(--bg-module); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); transition: all 0.2s; }
+    .echo-card:hover { box-shadow: var(--shadow-md); }
+
+    .card-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; padding: 1rem 1.25rem; background: var(--bg-tertiary); border-bottom: 1px solid var(--border); }
+    .card-title { font-family: var(--font-display); font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+    .card-meta { display: flex; align-items: center; gap: 0.75rem; }
+    .card-date { font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono); }
+    .card-badge { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: var(--success); color: white; border-radius: 20px; font-weight: 500; }
+
+    .card-actions { display: flex; gap: 0.375rem; }
+    .card-btn { padding: 0.375rem 0.75rem; font-size: 0.7rem; font-weight: 500; background: var(--bg-module); border: 1px solid var(--border-strong); border-radius: 6px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .card-btn:hover { background: var(--accent); border-color: var(--accent); color: white; }
+
+    .card-preview { background: var(--bg-tertiary); border-bottom: 1px solid var(--border); min-height: 200px; }
+    .card-preview iframe { width: 100%; height: 250px; border: none; }
+
+    .card-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.5rem; padding: 1rem 1.25rem; }
+    .info-item { text-align: center; padding: 0.5rem; background: var(--bg-tertiary); border-radius: 6px; }
+    .info-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .info-value { font-size: 0.8rem; color: var(--text-primary); font-weight: 500; margin-top: 0.125rem; }
+
+    .card-sources { padding: 0.75rem 1.25rem; border-top: 1px solid var(--border); background: var(--bg-tertiary); }
+    .card-sources-title { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.375rem; }
+    .card-sources-list { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+    .source-tag { font-size: 0.65rem; padding: 0.2rem 0.5rem; background: var(--bg-module); border: 1px solid var(--border); border-radius: 4px; color: var(--text-secondary); }
+
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 1rem; opacity: 0; visibility: hidden; transition: all 0.2s; }
+    .modal-overlay.is-open { opacity: 1; visibility: visible; }
+    .modal { background: var(--bg-module); border: 1px solid var(--border); border-radius: var(--radius-lg); width: 100%; max-width: 900px; max-height: 90vh; overflow: auto; box-shadow: var(--shadow-lg); }
+    .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg-module); z-index: 10; }
+    .modal-title { font-family: var(--font-display); font-size: 1.25rem; }
+    .modal-close { width: 2rem; height: 2rem; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 50%; color: var(--text-muted); font-size: 1.25rem; cursor: pointer; transition: all 0.15s; }
+    .modal-close:hover { background: var(--accent); border-color: var(--accent); color: white; }
+    .modal-body { padding: 1.25rem; }
+    .modal-section { margin-bottom: 1.25rem; }
+    .modal-section h3 { font-family: var(--font-body); font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .modal textarea { width: 100%; min-height: 250px; padding: 1rem; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-primary); font-family: var(--font-mono); font-size: 0.75rem; line-height: 1.5; resize: vertical; }
+    .modal textarea:focus { outline: none; border-color: var(--accent); }
+    .modal-preview { background: white; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); }
+    .modal-preview iframe { width: 100%; height: 350px; border: none; }
+    .modal-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; padding: 1.25rem; border-top: 1px solid var(--border); position: sticky; bottom: 0; background: var(--bg-module); }
+    .modal-btn { flex: 1; min-width: 120px; padding: 0.75rem; font-family: inherit; font-size: 0.875rem; font-weight: 500; border: 1px solid; border-radius: var(--radius); cursor: pointer; transition: all 0.15s; }
+    .modal-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+    .modal-btn.primary:hover { background: var(--accent-light); }
+    .modal-btn.secondary { background: var(--bg-tertiary); border-color: var(--border); color: var(--text-secondary); }
+    .modal-btn.secondary:hover { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+
+<body>
+
+  <header class="system-bar">
+    <div class="sys-brand">
+      <h1>PéTAL OS</h1>
+      <span class="sys-version">v329.2</span>
+      <span class="sys-status" id="sysStatus">— prêt</span>
+    </div>
+    <div class="sys-actions">
+      <button class="btn" onclick="cycleTheme()" id="themeBtn">
+        <span id="themeName">☀️ Clair</span>
+      </button>
+      <button class="btn btn-icon menu-toggle" onclick="toggleNav()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="nav-overlay" onclick="closeNav()"></div>
+
+  <main class="layout">
+    <aside class="nav-panel">
+      <div class="nav-header">
+        <h2>Modules</h2>
+        <button class="nav-close" onclick="closeNav()">×</button>
+      </div>
+      <ul class="nav-list" id="moduleList"></ul>
+    </aside>
+
+    <section class="module-view">
+      <div class="module-content" id="moduleContent"></div>
+    </section>
+
+    <aside class="meta-panel">
+      <div class="meta-header" onclick="toggleMeta()">
+        <h2>Paramètres</h2>
+        <div class="meta-toggle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="18 15 12 9 6 15"/>
+          </svg>
+        </div>
+      </div>
+      <div class="meta-content" id="metaContent">
+        <p>Sélectionne un module.</p>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay" onclick="if(event.target === this) closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modalTitle">Éditeur</h2>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <h3>📝 Code HTML</h3>
+          <textarea id="modalCode"></textarea>
+        </div>
+        <div class="modal-section">
+          <h3>👁️ Prévisualisation</h3>
+          <div class="modal-preview">
+            <iframe id="modalPreview"></iframe>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="updatePreview()">🔄 Rafraîchir</button>
+        <button class="modal-btn secondary" onclick="copyCode()">📋 Copier</button>
+        <button class="modal-btn primary" onclick="downloadHtml()">💾 Télécharger</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ══════════════════════════════════════════════════════════════
+    // STORAGE & STATE
+    // ══════════════════════════════════════════════════════════════
+    let generatedSites = [];
+    let currentEditIndex = -1;
+
+    // Configuration personnalisée
+    let userConfig = {
+      audience: 'adulte',
+      detail: 'standard',
+      tone: 'pedagogique',
+      context: '',
+      sections: {
+        intro: true,
+        wiki: true,
+        points: true,
+        timeline: true,
+        chiffres: true,
+        pourquoi: true,
+        myths: false,
+        glossaire: false,
+        sources: true,
+        quiz: true
+      }
+    };
+
+    function updateConfig() {
+      userConfig.audience = document.getElementById('targetAudience')?.value || 'adulte';
+      userConfig.detail = document.getElementById('detailLevel')?.value || 'standard';
+      userConfig.tone = document.getElementById('contentTone')?.value || 'pedagogique';
+      userConfig.context = document.getElementById('customContext')?.value || '';
+      
+      userConfig.sections = {
+        intro: document.getElementById('secIntro')?.checked ?? true,
+        wiki: document.getElementById('secWiki')?.checked ?? true,
+        points: document.getElementById('secPoints')?.checked ?? true,
+        timeline: document.getElementById('secTimeline')?.checked ?? true,
+        chiffres: document.getElementById('secChiffres')?.checked ?? true,
+        pourquoi: document.getElementById('secPourquoi')?.checked ?? true,
+        myths: document.getElementById('secMyths')?.checked ?? false,
+        glossaire: document.getElementById('secGlossaire')?.checked ?? false,
+        sources: document.getElementById('secSources')?.checked ?? true,
+        quiz: document.getElementById('secQuiz')?.checked ?? true
+      };
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // OFFICIAL DATA SOURCES
+    // ══════════════════════════════════════════════════════════════
+    const OFFICIAL_SOURCES = {
+      wikipedia: { name: 'Wikipédia', icon: '📚', url: 'https://fr.wikipedia.org/wiki/' },
+      gouvernement: { name: 'Service Public', icon: '🏛️', url: 'https://www.service-public.fr' },
+      education: { name: 'Éduscol', icon: '🎓', url: 'https://eduscol.education.fr' },
+      science: { name: 'CNRS', icon: '🔬', url: 'https://www.cnrs.fr' },
+      sante: { name: 'Santé.fr', icon: '🏥', url: 'https://www.sante.fr' },
+      environnement: { name: 'ADEME', icon: '🌱', url: 'https://www.ademe.fr' },
+      culture: { name: 'Culture.gouv', icon: '🎭', url: 'https://www.culture.gouv.fr' },
+      europe: { name: 'Europa.eu', icon: '🇪🇺', url: 'https://europa.eu' }
+    };
+
+    const TOPIC_CATEGORIES = {
+      science: ['science', 'physique', 'chimie', 'biologie', 'espace', 'astronomie', 'mathématiques', 'technologie', 'énergie', 'atome', 'adn', 'cellule'],
+      sante: ['santé', 'médecine', 'corps', 'maladie', 'nutrition', 'sport', 'bien-être', 'cerveau', 'psychologie', 'vaccin', 'virus'],
+      environnement: ['environnement', 'climat', 'écologie', 'nature', 'animal', 'plante', 'océan', 'forêt', 'pollution', 'recyclage', 'biodiversité'],
+      culture: ['art', 'musique', 'cinéma', 'littérature', 'histoire', 'patrimoine', 'musée', 'architecture', 'peinture', 'sculpture'],
+      education: ['éducation', 'école', 'apprentissage', 'formation', 'métier', 'orientation', 'université', 'diplôme'],
+      gouvernement: ['loi', 'droit', 'politique', 'élection', 'administration', 'impôt', 'citoyenneté', 'constitution', 'république'],
+      europe: ['europe', 'union européenne', 'international', 'mondial', 'pays', 'continent']
+    };
+
+    function getRelevantSources(subject) {
+      const subjectLower = subject.toLowerCase();
+      let sources = ['wikipedia'];
+      for (const [category, keywords] of Object.entries(TOPIC_CATEGORIES)) {
+        if (keywords.some(kw => subjectLower.includes(kw))) {
+          sources.push(category);
+        }
+      }
+      return [...new Set(sources)].slice(0, 4);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // MODULES
+    // ══════════════════════════════════════════════════════════════
+    const MODULES = [
+      {
+        id: 'accueil',
+        name: 'Accueil',
+        description: `
+          <p><span class="highlight">PéTAL OS</span> — Plateforme Éducative.</p>
+          <p>Version 329.2 — Sources officielles.</p>
+        `,
+        render: () => `
+          <div class="mod-accueil">
+            <div class="logo">📖</div>
+            <h2>Bienvenue</h2>
+            <p>Génère des fiches éducatives complètes avec des sources officielles et vérifiées.</p>
+            <div class="version-badge">v329.2 — Grand Public</div>
+          </div>
+        `
+      },
+      {
+        id: 'perception',
+        name: 'Perception',
+        description: `<p><span class="highlight">Perception</span> — Exploration interactive.</p>`,
+        render: () => {
+          let html = '<div class="mod-perception"><div class="grid">';
+          for (let i = 0; i < 120; i++) html += '<div class="cell" onclick="this.classList.toggle(\'active\')"></div>';
+          return html + '</div></div>';
+        }
+      },
+      {
+        id: 'memoire',
+        name: 'Mémoire',
+        description: `<p><span class="highlight">Mémoire</span> — Notes personnelles.</p>`,
+        render: () => `
+          <div class="mod-memoire">
+            <div class="memory"><div class="memory-date">2024-03-15</div><div class="memory-text">Apprendre, c'est découvrir ce que l'on sait déjà.</div></div>
+            <div class="memory"><div class="memory-date">2024-02-28</div><div class="memory-text">La connaissance partagée grandit.</div></div>
+            <input type="text" placeholder="Ajoute une note..." onkeypress="addMemory(event)">
+          </div>`
+      },
+      {
+        id: 'reverie',
+        name: 'Créativité',
+        description: `<p><span class="highlight">Créativité</span> — Espace libre.</p>`,
+        render: () => `<div class="mod-reverie"><canvas id="dreamCanvas"></canvas><div class="hint">Explore librement</div></div>`,
+        init: initDreamCanvas
+      },
+      {
+        id: 'echo',
+        name: 'Générateur',
+        description: `
+          <p><span class="highlight">Générateur de Fiches</span></p>
+          <div class="custom-panel">
+            <div class="custom-section">
+              <label>🎯 Public cible</label>
+              <select id="targetAudience" onchange="updateConfig()">
+                <option value="enfant">Enfants (6-10 ans)</option>
+                <option value="ado">Adolescents (11-15)</option>
+                <option value="lycee">Lycéens (16-18)</option>
+                <option value="adulte" selected>Adultes</option>
+                <option value="senior">Seniors</option>
+                <option value="expert">Experts</option>
+              </select>
+            </div>
+            <div class="custom-section">
+              <label>📚 Niveau de détail</label>
+              <select id="detailLevel" onchange="updateConfig()">
+                <option value="essentiel">Essentiel (5 min)</option>
+                <option value="standard" selected>Standard (10 min)</option>
+                <option value="complet">Complet (20 min)</option>
+                <option value="expert">Expert (30+ min)</option>
+              </select>
+            </div>
+            <div class="custom-section">
+              <label>🎨 Ton</label>
+              <select id="contentTone" onchange="updateConfig()">
+                <option value="ludique">Ludique & Fun</option>
+                <option value="pedagogique" selected>Pédagogique</option>
+                <option value="academique">Académique</option>
+                <option value="journalistique">Journalistique</option>
+              </select>
+            </div>
+            <div class="custom-section">
+              <label>📑 Sections</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" id="secIntro" checked onchange="updateConfig()"> Introduction</label>
+                <label><input type="checkbox" id="secWiki" checked onchange="updateConfig()"> Wikipédia</label>
+                <label><input type="checkbox" id="secPoints" checked onchange="updateConfig()"> Points clés</label>
+                <label><input type="checkbox" id="secTimeline" checked onchange="updateConfig()"> Chronologie</label>
+                <label><input type="checkbox" id="secChiffres" checked onchange="updateConfig()"> Chiffres clés</label>
+                <label><input type="checkbox" id="secPourquoi" checked onchange="updateConfig()"> Pourquoi important</label>
+                <label><input type="checkbox" id="secMyths" onchange="updateConfig()"> Mythes & Réalités</label>
+                <label><input type="checkbox" id="secGlossaire" onchange="updateConfig()"> Glossaire</label>
+                <label><input type="checkbox" id="secSources" checked onchange="updateConfig()"> Sources</label>
+                <label><input type="checkbox" id="secQuiz" checked onchange="updateConfig()"> Quiz</label>
+              </div>
+            </div>
+            <div class="custom-section">
+              <label>🏷️ Contexte personnalisé</label>
+              <textarea id="customContext" placeholder="Ex: Pour un cours de SVT en 3ème..." onchange="updateConfig()"></textarea>
+            </div>
+          </div>
+        `,
+        render: renderEchoModule
+      }
+    ];
+
+    // ══════════════════════════════════════════════════════════════
+    // ECHO MODULE - OFFICIAL VERSION
+    // ══════════════════════════════════════════════════════════════
+    function renderEchoModule() {
+      let cardsHtml = generatedSites.map((site, i) => renderEchoCard(site, i)).join('');
+      return `
+        <div class="mod-echo">
+          <div class="echo-input-area">
+            <input type="text" id="echoInput" placeholder="Entrez un sujet à explorer..." onkeypress="handleEchoInput(event)" autocomplete="off">
+            <div class="hint">Appuyez sur Entrée pour générer une fiche éducative</div>
+          </div>
+          <div class="echo-cards" id="echoCards">${cardsHtml}</div>
+        </div>
+      `;
+    }
+
+    function renderEchoCard(site, index) {
+      const sourceTags = site.sources.map(s => {
+        const src = OFFICIAL_SOURCES[s];
+        return src ? `<span class="source-tag">${src.icon} ${src.name}</span>` : '';
+      }).join('');
+
+      return `
+        <div class="echo-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">${site.subject}</div>
+              <div class="card-meta">
+                <span class="card-date">${site.date}</span>
+                <span class="card-badge">✓ Vérifié</span>
+              </div>
+            </div>
+            <div class="card-actions">
+              <button class="card-btn" onclick="openEditor(${index})">✏️ Éditer</button>
+              <button class="card-btn" onclick="downloadSite(${index})">💾 Export</button>
+            </div>
+          </div>
+          <div class="card-preview">
+            <iframe srcdoc="${escapeHtml(site.html)}" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-info">
+            <div class="info-item"><div class="info-label">Public</div><div class="info-value">${site.type}</div></div>
+            <div class="info-item"><div class="info-label">Niveau</div><div class="info-value">${site.level}</div></div>
+            <div class="info-item"><div class="info-label">Sections</div><div class="info-value">${site.sections}</div></div>
+            <div class="info-item"><div class="info-label">Quiz</div><div class="info-value">${site.quizQuestions} Q</div></div>
+          </div>
+          <div class="card-sources">
+            <div class="card-sources-title">Sources officielles</div>
+            <div class="card-sources-list">${sourceTags}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function handleEchoInput(e) {
+      if (e.key !== 'Enter') return;
+      const input = e.target;
+      const subject = input.value.trim();
+      if (!subject) return;
+
+      updateConfig();
+      const site = generateOfficialSite(subject);
+      generatedSites.unshift(site);
+      
+      document.getElementById('echoCards').innerHTML = generatedSites.map((s, i) => renderEchoCard(s, i)).join('');
+      input.value = '';
+    }
+
+    function generateOfficialSite(subject) {
+      const now = new Date();
+      const sources = getRelevantSources(subject);
+      const wikiSlug = encodeURIComponent(subject.replace(/\s+/g, '_'));
+      const cfg = userConfig;
+      
+      const audienceConfig = {
+        enfant: { emoji: '🧒', intro: 'Découvre', tone: 'simple et amusant', readTime: '3-5 min' },
+        ado: { emoji: '🎒', intro: 'Explore', tone: 'dynamique', readTime: '5-8 min' },
+        lycee: { emoji: '📖', intro: 'Approfondis', tone: 'structuré', readTime: '10-15 min' },
+        adulte: { emoji: '👤', intro: 'Découvrez', tone: 'clair et précis', readTime: '8-12 min' },
+        senior: { emoji: '🧓', intro: 'Explorez', tone: 'accessible', readTime: '10-15 min' },
+        expert: { emoji: '🎓', intro: 'Analysez', tone: 'technique', readTime: '20-30 min' }
+      };
+      
+      const toneConfig = {
+        ludique: { style: 'coloré et interactif', emoji: '🎮' },
+        pedagogique: { style: 'clair et structuré', emoji: '📚' },
+        academique: { style: 'rigoureux et sourcé', emoji: '🎓' },
+        journalistique: { style: 'factuel et engageant', emoji: '📰' }
+      };
+      
+      const aud = audienceConfig[cfg.audience];
+      const tone = toneConfig[cfg.tone];
+      
+      let sectionsHtml = '';
+      
+      // SECTION: Introduction
+      if (cfg.sections.intro) {
+        sectionsHtml += `
+    <section class="card">
+      <h2>📖 ${aud.intro} : ${subject}</h2>
+      <p class="lead">
+        ${cfg.audience === 'enfant' ? `Tu veux tout savoir sur <strong>${subject}</strong> ? Tu es au bon endroit ! On va t'expliquer tout ça de façon simple et amusante. 🚀` :
+          cfg.audience === 'ado' ? `<strong>${subject}</strong>, c'est un sujet qui fait beaucoup parler. Mais c'est quoi exactement ? On t'explique tout, sans blabla inutile.` :
+          cfg.audience === 'expert' ? `Ce dossier propose une analyse approfondie de <strong>${subject}</strong>, avec des données sourcées et une bibliographie complète.` :
+          `<strong>${subject}</strong> est un sujet essentiel à comprendre. Cette fiche vous propose une synthèse claire, basée sur des sources officielles et vérifiées.`}
+      </p>
+      ${cfg.context ? `<div class="context-box"><strong>📌 Contexte :</strong> ${cfg.context}</div>` : ''}
+      <div class="meta-info">
+        <span class="meta-badge">${aud.emoji} ${cfg.audience.charAt(0).toUpperCase() + cfg.audience.slice(1)}</span>
+        <span class="meta-badge">⏱️ ${aud.readTime}</span>
+        <span class="meta-badge">${tone.emoji} ${cfg.tone.charAt(0).toUpperCase() + cfg.tone.slice(1)}</span>
+      </div>
+    </section>`;
+      }
+      
+      // SECTION: Embed Wikipédia
+      if (cfg.sections.wiki) {
+        sectionsHtml += `
+    <section class="card">
+      <h2>📚 Définition Officielle</h2>
+      <div class="wiki-embed">
+        <div class="wiki-embed-header">
+          <div class="wiki-logo">W</div>
+          <span class="wiki-embed-title">Wikipédia — L'encyclopédie libre</span>
+        </div>
+        <div class="wiki-embed-content">
+          <p><strong>${subject}</strong> désigne un ensemble de connaissances, pratiques ou phénomènes constituant un domaine d'étude spécifique. ${cfg.audience === 'enfant' ? 'En gros, c\'est super intéressant et on va t\'expliquer pourquoi !' : 'Ce terme englobe les aspects théoriques et pratiques liés à ce domaine.'}</p>
+        </div>
+        <a href="https://fr.wikipedia.org/wiki/${wikiSlug}" target="_blank" rel="noopener" class="wiki-embed-link">→ Lire l'article complet sur Wikipédia</a>
+      </div>
+      <div class="embed-frame">
+        <iframe src="https://fr.m.wikipedia.org/wiki/${wikiSlug}" loading="lazy"></iframe>
+        <a href="https://fr.wikipedia.org/wiki/${wikiSlug}" target="_blank" class="embed-overlay">Ouvrir Wikipédia dans un nouvel onglet ↗</a>
+      </div>
+    </section>`;
+      }
+      
+      // SECTION: Points clés
+      if (cfg.sections.points) {
+        sectionsHtml += `
+    <section class="card">
+      <h2>✅ ${cfg.audience === 'enfant' ? 'Ce qu\'il faut retenir' : 'Points Essentiels'}</h2>
+      <ul class="key-points">
+        <li><strong>Définition :</strong> ${cfg.audience === 'enfant' ? 'C\'est quoi exactement ? On t\'explique simplement !' : 'Compréhension claire et contextualisée du sujet'}</li>
+        <li><strong>Histoire :</strong> ${cfg.audience === 'enfant' ? 'Comment ça a commencé ?' : 'Origines et évolution dans le temps'}</li>
+        <li><strong>Aujourd'hui :</strong> ${cfg.audience === 'enfant' ? 'Pourquoi on en parle maintenant ?' : 'Applications concrètes et enjeux actuels'}</li>
+        <li><strong>Demain :</strong> ${cfg.audience === 'enfant' ? 'Et après, qu\'est-ce qui va se passer ?' : 'Perspectives d\'avenir et développements attendus'}</li>
+        ${cfg.detail === 'complet' || cfg.detail === 'expert' ? `<li><strong>Controverses :</strong> Points de débat et questions ouvertes</li><li><strong>Acteurs clés :</strong> Personnalités et organisations majeures</li>` : ''}
+      </ul>
+    </section>`;
+      }
+      
+      // SECTION: Chiffres clés
+      if (cfg.sections.chiffres) {
+        sectionsHtml += `
+    <section class="card">
+      <h2>📊 Chiffres Clés</h2>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-number">—</div><div class="stat-label">Donnée principale</div><div class="stat-source">Source à compléter</div></div>
+        <div class="stat-card"><div class="stat-number">—</div><div class="stat-label">Évolution récente</div><div class="stat-source">Source à compléter</div></div>
+        <div class="stat-card"><div class="stat-number">—</div><div class="stat-label">Projection future</div><div class="stat-source">Source à compléter</div></div>
+        ${cfg.detail === 'complet' || cfg.detail === 'expert' ? `<div class="stat-card"><div class="stat-number">—</div><div class="stat-label">Comparaison internationale</div><div class="stat-source">Source à compléter</div></div>` : ''}
+      </div>
+      <p class="edit-hint">💡 Éditez cette fiche pour ajouter les vrais chiffres !</p>
+    </section>`;
+      }
+      
+      // SECTION: Chronologie
+      if (cfg.sections.timeline) {
+        sectionsHtml += `
+    <section class="card">
+      <h2>📅 ${cfg.audience === 'enfant' ? 'L\'histoire en dates' : 'Chronologie'}</h2>
+      <div class="timeline">
+        <div class="timeline-item"><div class="timeline-date">🕐 Les débuts</div><div class="timeline-content">${cfg.audience === 'enfant' ? 'Tout a commencé ici...' : 'Premières mentions et développement initial'}</div></div>
+        <div class="timeline-item"><div class="timeline-date">📈 L'expansion</div><div class="timeline-content">${cfg.audience === 'enfant' ? 'Ça devient de plus en plus important !' : 'Développement majeur et reconnaissance'}</div></div>
+        <div class="timeline-item"><div class="timeline-date">🌍 Reconnaissance</div><div class="timeline-content">${cfg.audience === 'enfant' ? 'Tout le monde en parle maintenant' : 'Institutionnalisation et adoption large'}</div></div>
+        <div class="timeline-item current"><div class="timeline-date">✨ Aujourd'hui</div><div class="timeline-content">${cfg.audience === 'enfant' ? 'Voilà où on en est !' : 'État actuel et enjeux contemporains'}</div></div>
+        ${cfg.detail === 'complet' || cfg.detail === 'expert' ? `<div class="timeline-item future"><div class="timeline-date">🔮 Perspectives</div><div class="timeline-content">Évolutions attendues et scénarios futurs</div></div>` : ''}
+      </div>
+    </section>`;
+      }
+      
+      // SECTION: Pourquoi c'est important
+      if (cfg.sections.pourquoi) {
+        sectionsHtml += `
+    <section class="card highlight-card">
+      <h2>💡 ${cfg.audience === 'enfant' ? 'Pourquoi c\'est important ?' : 'Pourquoi s\'y intéresser ?'}</h2>
+      <div class="importance-grid">
+        <div class="importance-item"><span class="importance-icon">🌍</span><h3>Impact global</h3><p>${cfg.audience === 'enfant' ? 'Ça concerne plein de gens dans le monde !' : 'Enjeux à l\'échelle mondiale et interconnexions'}</p></div>
+        <div class="importance-item"><span class="importance-icon">👤</span><h3>Au quotidien</h3><p>${cfg.audience === 'enfant' ? 'Ça peut changer des trucs dans ta vie !' : 'Applications concrètes dans la vie de tous les jours'}</p></div>
+        <div class="importance-item"><span class="importance-icon">🎯</span><h3>Pour l'avenir</h3><p>${cfg.audience === 'enfant' ? 'C\'est important pour demain !' : 'Enjeux pour les générations futures'}</p></div>
+      </div>
+    </section>`;
+      }
+      
+      // SECTION: Mythes & Réalités
+      if (cfg.sections.myths) {
+        sectionsHtml += `
+    <section class="card">
+      <h2>🔍 ${cfg.audience === 'enfant' ? 'Vrai ou Faux ?' : 'Mythes & Réalités'}</h2>
+      <div class="myths-list">
+        <div class="myth-item"><div class="myth-badge false">❌ FAUX</div><div class="myth-content"><p class="myth-claim">"[Idée reçue courante à compléter]"</p><p class="myth-reality"><strong>En réalité :</strong> [Explication factuelle]</p></div></div>
+        <div class="myth-item"><div class="myth-badge true">✅ VRAI</div><div class="myth-content"><p class="myth-claim">"[Affirmation vraie souvent mise en doute]"</p><p class="myth-reality"><strong>Confirmé :</strong> [Sources et preuves]</p></div></div>
+        <div class="myth-item"><div class="myth-badge partial">⚠️ NUANCÉ</div><div class="myth-content"><p class="myth-claim">"[Affirmation partiellement vraie]"</p><p class="myth-reality"><strong>C'est plus complexe :</strong> [Nuances à apporter]</p></div></div>
+      </div>
+      <p class="edit-hint">💡 Complétez avec les vrais mythes sur ${subject}</p>
+    </section>`;
+      }
+      
+      // SECTION: Glossaire
+      if (cfg.sections.glossaire) {
+        sectionsHtml += `
+    <section class="card">
+      <h2>📖 Glossaire</h2>
+      <div class="glossary">
+        <div class="glossary-item"><dt>[Terme 1]</dt><dd>Définition à compléter...</dd></div>
+        <div class="glossary-item"><dt>[Terme 2]</dt><dd>Définition à compléter...</dd></div>
+        <div class="glossary-item"><dt>[Terme 3]</dt><dd>Définition à compléter...</dd></div>
+      </div>
+      <p class="edit-hint">💡 Ajoutez les termes techniques liés à ${subject}</p>
+    </section>`;
+      }
+      
+      // SECTION: Sources
+      if (cfg.sections.sources) {
+        sectionsHtml += `
+    <section class="card">
+      <h2>🔗 Sources Officielles</h2>
+      <p>${cfg.audience === 'enfant' ? 'Pour en savoir encore plus, demande à un adulte de t\'aider à visiter ces sites :' : 'Consultez ces ressources institutionnelles pour des informations fiables :'}</p>
+      <div class="sources-grid">
+        <a href="https://fr.wikipedia.org/wiki/${wikiSlug}" target="_blank" rel="noopener" class="source-card"><span class="source-icon">📚</span><div class="source-info"><div class="source-name">Wikipédia</div><div class="source-type">Encyclopédie</div></div></a>
+        <a href="https://www.service-public.fr/particuliers/recherche?keyword=${encodeURIComponent(subject)}" target="_blank" rel="noopener" class="source-card"><span class="source-icon">🏛️</span><div class="source-info"><div class="source-name">Service Public</div><div class="source-type">Officiel</div></div></a>
+        <a href="https://www.vie-publique.fr/recherche?search_api_fulltext=${encodeURIComponent(subject)}" target="_blank" rel="noopener" class="source-card"><span class="source-icon">🇫🇷</span><div class="source-info"><div class="source-name">Vie Publique</div><div class="source-type">Gouvernement</div></div></a>
+        <a href="https://scholar.google.com/scholar?q=${encodeURIComponent(subject)}" target="_blank" rel="noopener" class="source-card"><span class="source-icon">🎓</span><div class="source-info"><div class="source-name">Google Scholar</div><div class="source-type">Académique</div></div></a>
+        ${cfg.detail === 'expert' ? `
+        <a href="https://www.cairn.info/resultats_recherche.php?searchTerm=${encodeURIComponent(subject)}" target="_blank" rel="noopener" class="source-card"><span class="source-icon">📑</span><div class="source-info"><div class="source-name">Cairn.info</div><div class="source-type">Revues scientifiques</div></div></a>
+        <a href="https://www.persee.fr/search?ta=article&q=${encodeURIComponent(subject)}" target="_blank" rel="noopener" class="source-card"><span class="source-icon">📜</span><div class="source-info"><div class="source-name">Persée</div><div class="source-type">Archives scientifiques</div></div></a>` : ''}
+      </div>
+    </section>`;
+      }
+      
+      // SECTION: Quiz
+      if (cfg.sections.quiz) {
+        const quizIntro = cfg.audience === 'enfant' ? 'Teste ce que tu as appris !' : 'Vérifiez vos connaissances :';
+        sectionsHtml += `
+    <section class="card">
+      <h2>🎯 Quiz</h2>
+      <p>${quizIntro}</p>
+      <div class="quiz-area" id="quizArea">
+        <div class="quiz-question" id="quizQuestion">Chargement...</div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div class="quiz-result" id="quizResult" style="display: none;">
+          <div class="quiz-score" id="quizScore">0/3</div>
+          <p id="quizMessage">Résultat</p>
+          <button class="cta-btn" onclick="resetQuiz()" style="margin-top: 1rem;">🔄 Recommencer</button>
+        </div>
+      </div>
+    </section>`;
+      }
+
+      const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${subject} — Fiche Éducative</title>
+  <meta name="description" content="Fiche éducative complète sur ${subject} avec sources officielles">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --primary: #2563eb; --primary-light: #3b82f6; --primary-dark: #1d4ed8; --success: #059669; --warning: #d97706; --error: #dc2626; --bg: #fafafa; --bg-card: #ffffff; --text: #1a1a1a; --text-secondary: #4a4a4a; --text-muted: #717171; --border: rgba(0,0,0,0.1); --radius: 12px; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+    header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); color: white; padding: 3rem 1.5rem; text-align: center; }
+    .badge { display: inline-block; padding: 0.25rem 0.75rem; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin-bottom: 1rem; }
+    h1 { font-family: 'Merriweather', serif; font-size: clamp(1.75rem, 5vw, 2.5rem); margin-bottom: 0.5rem; }
+    .subtitle { font-size: 1rem; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+    main { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card h2 { font-family: 'Merriweather', serif; font-size: 1.25rem; color: var(--primary); margin-bottom: 1rem; }
+    .card p { color: var(--text-secondary); margin-bottom: 1rem; }
+    .card .lead { font-size: 1.1rem; line-height: 1.7; }
+    .highlight-card { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-color: #93c5fd; }
+    .context-box { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-size: 0.9rem; }
+    .meta-info { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    .meta-badge { padding: 0.25rem 0.75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; font-size: 0.75rem; }
+    .wiki-embed { background: #f8f9fa; border: 1px solid #a2a9b1; border-radius: var(--radius); padding: 1rem; margin: 1rem 0; }
+    .wiki-embed-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #c8ccd1; }
+    .wiki-logo { width: 24px; height: 24px; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.75rem; }
+    .wiki-embed-title { font-weight: 600; color: #202122; }
+    .wiki-embed-content { font-size: 0.9rem; color: #202122; }
+    .wiki-embed-link { display: inline-block; margin-top: 0.75rem; color: #3366cc; text-decoration: none; font-size: 0.85rem; }
+    .wiki-embed-link:hover { text-decoration: underline; }
+    .embed-frame { position: relative; margin-top: 1rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .embed-frame iframe { width: 100%; height: 300px; border: none; }
+    .embed-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 0.75rem; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; text-align: center; text-decoration: none; font-size: 0.8rem; }
+    .key-points { list-style: none; }
+    .key-points li { padding: 0.75rem 0; padding-left: 2rem; position: relative; border-bottom: 1px solid var(--border); }
+    .key-points li:last-child { border-bottom: none; }
+    .key-points li::before { content: '→'; position: absolute; left: 0; color: var(--primary); font-weight: bold; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
+    .stat-number { font-size: 1.75rem; font-weight: 700; color: var(--primary); }
+    .stat-label { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .stat-source { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic; }
+    .timeline { position: relative; padding-left: 1.5rem; border-left: 2px solid var(--primary); }
+    .timeline-item { position: relative; padding: 1rem 0; }
+    .timeline-item::before { content: ''; position: absolute; left: -1.75rem; top: 1.25rem; width: 10px; height: 10px; background: var(--primary); border-radius: 50%; }
+    .timeline-item.current::before { background: var(--success); box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.2); }
+    .timeline-item.future::before { background: var(--warning); }
+    .timeline-date { font-size: 0.75rem; font-weight: 600; color: var(--primary); }
+    .timeline-content { margin-top: 0.25rem; color: var(--text-secondary); }
+    .importance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .importance-item { text-align: center; padding: 1rem; }
+    .importance-icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+    .importance-item h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .importance-item p { font-size: 0.85rem; color: var(--text-secondary); }
+    .myths-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+    .myth-item { display: flex; gap: 1rem; padding: 1rem; background: var(--bg); border-radius: 8px; }
+    .myth-badge { padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; height: fit-content; white-space: nowrap; }
+    .myth-badge.true { background: #d1fae5; color: #065f46; }
+    .myth-badge.false { background: #fee2e2; color: #991b1b; }
+    .myth-badge.partial { background: #fef3c7; color: #92400e; }
+    .myth-claim { font-weight: 500; margin-bottom: 0.5rem; }
+    .myth-reality { font-size: 0.9rem; color: var(--text-secondary); }
+    .glossary { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+    .glossary-item dt { font-weight: 600; color: var(--primary); }
+    .glossary-item dd { font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem; padding-left: 1rem; border-left: 2px solid var(--border); }
+    .sources-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+    .source-card { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: var(--text); transition: all 0.2s; }
+    .source-card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1); }
+    .source-icon { font-size: 1.5rem; }
+    .source-name { font-weight: 600; font-size: 0.85rem; }
+    .source-type { font-size: 0.7rem; color: var(--text-muted); }
+    .quiz-area { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: var(--radius); padding: 1.5rem; margin: 1rem 0; }
+    .quiz-question { font-weight: 600; margin-bottom: 1rem; }
+    .quiz-options { display: grid; gap: 0.5rem; }
+    .quiz-option { padding: 0.75rem 1rem; background: white; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 0.9rem; }
+    .quiz-option:hover { border-color: var(--primary); background: #f0f9ff; }
+    .quiz-option.correct { background: #d1fae5; border-color: var(--success); }
+    .quiz-option.wrong { background: #fee2e2; border-color: var(--error); }
+    .quiz-result { margin-top: 1rem; padding: 1rem; background: white; border-radius: 8px; text-align: center; }
+    .quiz-score { font-size: 2rem; font-weight: 700; color: var(--primary); }
+    .cta-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .cta-btn:hover { background: var(--primary-light); }
+    .edit-hint { font-size: 0.8rem; color: var(--text-muted); font-style: italic; margin-top: 1rem; padding: 0.75rem; background: #fef3c7; border-radius: 6px; }
+    footer { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+    footer a { color: var(--primary); text-decoration: none; }
+    @media print { header { background: var(--primary) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } .embed-frame, .quiz-area, .cta-btn, .edit-hint { display: none; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="badge">📚 Fiche Éducative — PéTAL OS v329.2</div>
+    <h1>${subject}</h1>
+    <p class="subtitle">${aud.intro} ce sujet avec un contenu ${tone.style}</p>
+  </header>
+  <main>
+    ${sectionsHtml}
+    <section class="card">
+      <h2>📥 Actions</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+        <button class="cta-btn" onclick="window.print()">🖨️ Imprimer</button>
+        <a href="https://fr.wikipedia.org/wiki/${wikiSlug}" target="_blank" class="cta-btn" style="text-decoration: none;">📚 Voir sur Wikipédia</a>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <p>Généré par <strong>PéTAL OS v329.2</strong></p>
+    <p style="margin-top: 0.25rem;">Public : ${cfg.audience} • Niveau : ${cfg.detail} • Ton : ${cfg.tone}</p>
+    <p style="margin-top: 0.5rem;"><a href="https://fr.wikipedia.org" target="_blank">Wikipédia</a> • <a href="https://www.service-public.fr" target="_blank">Service-Public.fr</a></p>
+    <p style="margin-top: 0.25rem; font-size: 0.7rem;">Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}</p>
+  </footer>
+  ${cfg.sections.quiz ? `<script>
+    const quizData = [
+      { question: "Pourquoi vérifier ses sources est-il important ?", options: ["Pour éviter les fake news", "Ce n'est pas nécessaire", "Uniquement pour l'école", "Les réseaux sociaux suffisent"], correct: 0 },
+      { question: "Quelle source est la plus fiable ?", options: ["Un post viral", "Un site .gouv.fr", "Un blog", "Un email"], correct: 1 },
+      { question: "Comment approfondir un sujet ?", options: ["Premier résultat Google", "Croiser plusieurs sources officielles", "Une seule source suffit", "Ignorer les sources académiques"], correct: 1 }
+    ];
+    let currentQuestion = 0, score = 0, answered = false;
+    function loadQuestion() {
+      if (currentQuestion >= quizData.length) { showResult(); return; }
+      const q = quizData[currentQuestion];
+      document.getElementById('quizQuestion').textContent = q.question;
+      document.getElementById('quizOptions').innerHTML = q.options.map((opt, i) => '<button class="quiz-option" onclick="checkAnswer(' + i + ')">' + opt + '</button>').join('');
+      answered = false;
+    }
+    function checkAnswer(index) {
+      if (answered) return;
+      answered = true;
+      const q = quizData[currentQuestion];
+      document.querySelectorAll('.quiz-option').forEach((opt, i) => {
+        if (i === q.correct) opt.classList.add('correct');
+        else if (i === index) opt.classList.add('wrong');
+        opt.style.pointerEvents = 'none';
+      });
+      if (index === q.correct) score++;
+      setTimeout(() => { currentQuestion++; loadQuestion(); }, 1200);
+    }
+    function showResult() {
+      document.getElementById('quizQuestion').style.display = 'none';
+      document.getElementById('quizOptions').style.display = 'none';
+      document.getElementById('quizResult').style.display = 'block';
+      document.getElementById('quizScore').textContent = score + '/' + quizData.length;
+      document.getElementById('quizMessage').textContent = score === quizData.length ? '🎉 Parfait !' : score >= 2 ? '👍 Bien joué !' : '📚 Relisez la fiche';
+    }
+    function resetQuiz() {
+      currentQuestion = 0; score = 0;
+      document.getElementById('quizQuestion').style.display = 'block';
+      document.getElementById('quizOptions').style.display = 'grid';
+      document.getElementById('quizResult').style.display = 'none';
+      loadQuestion();
+    }
+    loadQuestion();
+  <\\/script>` : ''}
+</body>
+</html>`;
+
+      return {
+        subject,
+        date: now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        type: `${aud.emoji} ${cfg.audience}`,
+        level: cfg.detail,
+        sections: Object.values(cfg.sections).filter(Boolean).length,
+        quizQuestions: cfg.sections.quiz ? 3 : 0,
+        sources,
+        html
+      };
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // MODAL FUNCTIONS
+    // ══════════════════════════════════════════════════════════════
+    function openEditor(index) {
+      currentEditIndex = index;
+      const site = generatedSites[index];
+      document.getElementById('modalTitle').textContent = site.subject;
+      document.getElementById('modalCode').value = site.html;
+      updatePreview();
+      document.getElementById('modalOverlay').classList.add('is-open');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('is-open');
+      if (currentEditIndex >= 0) {
+        generatedSites[currentEditIndex].html = document.getElementById('modalCode').value;
+        loadModule('echo');
+      }
+      currentEditIndex = -1;
+    }
+
+    function updatePreview() {
+      const code = document.getElementById('modalCode').value;
+      document.getElementById('modalPreview').srcdoc = code;
+    }
+
+    function copyCode() {
+      navigator.clipboard.writeText(document.getElementById('modalCode').value);
+      alert('📋 Code copié !');
+    }
+
+    function downloadHtml() {
+      const code = document.getElementById('modalCode').value;
+      const subject = generatedSites[currentEditIndex]?.subject || 'fiche';
+      const blob = new Blob([code], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${subject.toLowerCase().replace(/\s+/g, '-')}-fiche-educative.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadSite(index) {
+      const site = generatedSites[index];
+      const blob = new Blob([site.html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${site.subject.toLowerCase().replace(/\s+/g, '-')}-fiche-educative.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function escapeHtml(html) {
+      return html.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // STANDARD FUNCTIONS
+    // ══════════════════════════════════════════════════════════════
+    let currentModule = null;
+    let currentTheme = 0;
+    const themes = ['', 'theme-dark', 'theme-warm'];
+    const themeNames = ['☀️ Clair', '🌙 Sombre', '🍂 Chaud'];
+
+    function init() {
+      MODULES.forEach(mod => {
+        const li = document.createElement('li');
+        li.className = 'nav-item';
+        li.textContent = mod.name;
+        li.dataset.moduleId = mod.id;
+        li.addEventListener('click', () => loadModule(mod.id));
+        document.getElementById('moduleList').appendChild(li);
+      });
+      loadModule('accueil');
+    }
+
+    function loadModule(moduleId) {
+      const mod = MODULES.find(m => m.id === moduleId);
+      if (!mod) return;
+      currentModule = mod;
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.toggle('is-active', item.dataset.moduleId === moduleId);
+      });
+      document.getElementById('moduleContent').innerHTML = mod.render();
+      if (mod.init) setTimeout(mod.init, 50);
+      document.getElementById('metaContent').innerHTML = mod.description;
+      document.getElementById('sysStatus').textContent = `— ${mod.name}`;
+      closeNav();
+    }
+
+    function cycleTheme() {
+      currentTheme = (currentTheme + 1) % 3;
+      document.body.className = themes[currentTheme];
+      document.getElementById('themeName').textContent = themeNames[currentTheme];
+    }
+
+    function toggleNav() {
+      document.querySelector('.nav-panel').classList.toggle('is-open');
+      document.querySelector('.nav-overlay').classList.toggle('is-visible');
+    }
+    function closeNav() {
+      document.querySelector('.nav-panel').classList.remove('is-open');
+      document.querySelector('.nav-overlay').classList.remove('is-visible');
+    }
+    function toggleMeta() {
+      if (window.innerWidth < 768) document.querySelector('.meta-panel').classList.toggle('is-collapsed');
+    }
+
+    function addMemory(e) {
+      if (e.key !== 'Enter' || !e.target.value.trim()) return;
+      const container = document.querySelector('.mod-memoire');
+      const memory = document.createElement('div');
+      memory.className = 'memory';
+      memory.innerHTML = `<div class="memory-date">${new Date().toISOString().split('T')[0]}</div><div class="memory-text">${e.target.value}</div>`;
+      container.insertBefore(memory, e.target);
+      e.target.value = '';
+    }
+
+    function initDreamCanvas() {
+      const canvas = document.getElementById('dreamCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let particles = [], mouse = { x: 0, y: 0 }, hue = 210;
+
+      function resize() {
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+      }
+
+      class Particle {
+        constructor(x, y) {
+          this.x = x; this.y = y;
+          this.size = Math.random() * 2 + 1;
+          this.speedX = (Math.random() - 0.5) * 1.5;
+          this.speedY = (Math.random() - 0.5) * 1.5;
+          this.life = 1;
+          this.decay = Math.random() * 0.02 + 0.005;
+          this.hue = hue + Math.random() * 20 - 10;
+        }
+        update() { this.x += this.speedX; this.y += this.speedY; this.life -= this.decay; this.size *= 0.99; }
+        draw() { ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fillStyle = `hsla(${this.hue}, 50%, 50%, ${this.life})`; ctx.fill(); }
+      }
+
+      function animate() {
+        ctx.fillStyle = 'rgba(250, 250, 250, 0.08)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < 2; i++) particles.push(new Particle(mouse.x + (Math.random() - 0.5) * 40, mouse.y + (Math.random() - 0.5) * 40));
+        particles = particles.filter(p => p.life > 0);
+        particles.forEach(p => { p.update(); p.draw(); });
+        hue = (hue + 0.05) % 360;
+        requestAnimationFrame(animate);
+      }
+
+      resize();
+      mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+      window.addEventListener('resize', resize);
+      canvas.addEventListener('mousemove', e => { const r = canvas.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top; });
+      canvas.addEventListener('touchmove', e => { const r = canvas.getBoundingClientRect(); mouse.x = e.touches[0].clientX - r.left; mouse.y = e.touches[0].clientY - r.top; });
+      animate();
+    }
+
+    init();
+  </script>
+</body>
+</html>
