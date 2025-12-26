@@ -1,0 +1,784 @@
+Je te donne les blocs de code à ajouter/modifier. C'est organisé par section !
+
+---
+
+## 1️⃣ PERSONNALISATION DANS LE PANNEAU CONTEXTE
+
+**📍 Où :** Remplace la description du module `echo` (cherche `id: 'echo'` vers ligne ~180)
+
+```javascript
+{
+  id: 'echo',
+  name: 'Générateur',
+  description: `
+    <p><span class="highlight">Générateur de Fiches</span></p>
+    <div class="custom-panel">
+      <div class="custom-section">
+        <label>🎯 Public cible</label>
+        <select id="targetAudience" onchange="updateConfig()">
+          <option value="enfant">Enfants (6-10 ans)</option>
+          <option value="ado">Adolescents (11-15 ans)</option>
+          <option value="lycee">Lycéens (16-18 ans)</option>
+          <option value="adulte" selected>Adultes</option>
+          <option value="senior">Seniors</option>
+          <option value="expert">Experts</option>
+        </select>
+      </div>
+      <div class="custom-section">
+        <label>📚 Niveau de détail</label>
+        <select id="detailLevel" onchange="updateConfig()">
+          <option value="essentiel">Essentiel (5 min)</option>
+          <option value="standard" selected>Standard (10 min)</option>
+          <option value="complet">Complet (20 min)</option>
+          <option value="expert">Expert (30+ min)</option>
+        </select>
+      </div>
+      <div class="custom-section">
+        <label>🎨 Ton</label>
+        <select id="contentTone" onchange="updateConfig()">
+          <option value="ludique">Ludique & Fun</option>
+          <option value="pedagogique" selected>Pédagogique</option>
+          <option value="academique">Académique</option>
+          <option value="journalistique">Journalistique</option>
+        </select>
+      </div>
+      <div class="custom-section">
+        <label>📑 Sections à inclure</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="secIntro" checked onchange="updateConfig()"> Introduction</label>
+          <label><input type="checkbox" id="secWiki" checked onchange="updateConfig()"> Wikipédia</label>
+          <label><input type="checkbox" id="secPoints" checked onchange="updateConfig()"> Points clés</label>
+          <label><input type="checkbox" id="secTimeline" checked onchange="updateConfig()"> Chronologie</label>
+          <label><input type="checkbox" id="secChiffres" checked onchange="updateConfig()"> Chiffres clés</label>
+          <label><input type="checkbox" id="secPourquoi" checked onchange="updateConfig()"> Pourquoi c'est important</label>
+          <label><input type="checkbox" id="secMyths" onchange="updateConfig()"> Mythes & Réalités</label>
+          <label><input type="checkbox" id="secGlossaire" onchange="updateConfig()"> Glossaire</label>
+          <label><input type="checkbox" id="secSources" checked onchange="updateConfig()"> Sources</label>
+          <label><input type="checkbox" id="secQuiz" checked onchange="updateConfig()"> Quiz</label>
+        </div>
+      </div>
+      <div class="custom-section">
+        <label>🏷️ Contexte personnalisé</label>
+        <textarea id="customContext" placeholder="Ex: Pour un cours de SVT en 3ème sur l'environnement..." onchange="updateConfig()"></textarea>
+      </div>
+    </div>
+  `,
+  render: renderEchoModule
+}
+```
+
+---
+
+## 2️⃣ STYLES POUR LE PANNEAU DE PERSONNALISATION
+
+**📍 Où :** Ajoute dans le `<style>`, à la fin avant `</style>`
+
+```css
+/* Panneau de personnalisation */
+.custom-panel {
+  margin-top: 1rem;
+}
+
+.custom-section {
+  margin-bottom: 1rem;
+}
+
+.custom-section label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.375rem;
+}
+
+.custom-section select,
+.custom-section textarea {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+}
+
+.custom-section select:focus,
+.custom-section textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.custom-section textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.config-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  margin-left: 0.5rem;
+}
+```
+
+---
+
+## 3️⃣ CONFIGURATION GLOBALE ET FONCTION updateConfig
+
+**📍 Où :** Ajoute après `let currentEditIndex = -1;` (vers ligne ~200)
+
+```javascript
+// Configuration personnalisée
+let userConfig = {
+  audience: 'adulte',
+  detail: 'standard',
+  tone: 'pedagogique',
+  context: '',
+  sections: {
+    intro: true,
+    wiki: true,
+    points: true,
+    timeline: true,
+    chiffres: true,
+    pourquoi: true,
+    myths: false,
+    glossaire: false,
+    sources: true,
+    quiz: true
+  }
+};
+
+function updateConfig() {
+  userConfig.audience = document.getElementById('targetAudience')?.value || 'adulte';
+  userConfig.detail = document.getElementById('detailLevel')?.value || 'standard';
+  userConfig.tone = document.getElementById('contentTone')?.value || 'pedagogique';
+  userConfig.context = document.getElementById('customContext')?.value || '';
+  
+  userConfig.sections = {
+    intro: document.getElementById('secIntro')?.checked ?? true,
+    wiki: document.getElementById('secWiki')?.checked ?? true,
+    points: document.getElementById('secPoints')?.checked ?? true,
+    timeline: document.getElementById('secTimeline')?.checked ?? true,
+    chiffres: document.getElementById('secChiffres')?.checked ?? true,
+    pourquoi: document.getElementById('secPourquoi')?.checked ?? true,
+    myths: document.getElementById('secMyths')?.checked ?? false,
+    glossaire: document.getElementById('secGlossaire')?.checked ?? false,
+    sources: document.getElementById('secSources')?.checked ?? true,
+    quiz: document.getElementById('secQuiz')?.checked ?? true
+  };
+}
+```
+
+---
+
+## 4️⃣ NOUVELLE FONCTION generateOfficialSite ENRICHIE
+
+**📍 Où :** Remplace entièrement la fonction `generateOfficialSite` existante
+
+```javascript
+function generateOfficialSite(subject) {
+  const now = new Date();
+  const sources = getRelevantSources(subject);
+  const wikiSlug = encodeURIComponent(subject.replace(/\s+/g, '_'));
+  const cfg = userConfig;
+  
+  // Adaptation du contenu selon le public
+  const audienceConfig = {
+    enfant: { emoji: '🧒', intro: 'Découvre', tone: 'simple et amusant', readTime: '3-5 min' },
+    ado: { emoji: '🎒', intro: 'Explore', tone: 'dynamique', readTime: '5-8 min' },
+    lycee: { emoji: '📖', intro: 'Approfondis', tone: 'structuré', readTime: '10-15 min' },
+    adulte: { emoji: '👤', intro: 'Découvrez', tone: 'clair et précis', readTime: '8-12 min' },
+    senior: { emoji: '🧓', intro: 'Explorez', tone: 'accessible', readTime: '10-15 min' },
+    expert: { emoji: '🎓', intro: 'Analysez', tone: 'technique', readTime: '20-30 min' }
+  };
+  
+  const toneConfig = {
+    ludique: { style: 'coloré et interactif', emoji: '🎮' },
+    pedagogique: { style: 'clair et structuré', emoji: '📚' },
+    academique: { style: 'rigoureux et sourcé', emoji: '🎓' },
+    journalistique: { style: 'factuel et engageant', emoji: '📰' }
+  };
+  
+  const aud = audienceConfig[cfg.audience];
+  const tone = toneConfig[cfg.tone];
+  
+  // Construction des sections HTML
+  let sectionsHtml = '';
+  
+  // SECTION: Introduction
+  if (cfg.sections.intro) {
+    sectionsHtml += `
+    <section class="card">
+      <h2>📖 ${aud.intro} : ${subject}</h2>
+      <p class="lead">
+        ${cfg.audience === 'enfant' ? `Tu veux tout savoir sur <strong>${subject}</strong> ? Tu es au bon endroit ! On va t'expliquer tout ça de façon simple et amusante. 🚀` :
+          cfg.audience === 'ado' ? `<strong>${subject}</strong>, c'est un sujet qui fait beaucoup parler. Mais c'est quoi exactement ? On t'explique tout, sans blabla inutile.` :
+          cfg.audience === 'expert' ? `Ce dossier propose une analyse approfondie de <strong>${subject}</strong>, avec des données sourcées et une bibliographie complète.` :
+          `<strong>${subject}</strong> est un sujet essentiel à comprendre. Cette fiche vous propose une synthèse claire, basée sur des sources officielles et vérifiées.`}
+      </p>
+      ${cfg.context ? `<div class="context-box"><strong>📌 Contexte :</strong> ${cfg.context}</div>` : ''}
+      <div class="meta-info">
+        <span class="meta-badge">${aud.emoji} ${cfg.audience.charAt(0).toUpperCase() + cfg.audience.slice(1)}</span>
+        <span class="meta-badge">⏱️ ${aud.readTime}</span>
+        <span class="meta-badge">${tone.emoji} ${cfg.tone.charAt(0).toUpperCase() + cfg.tone.slice(1)}</span>
+      </div>
+    </section>`;
+  }
+  
+  // SECTION: Embed Wikipédia
+  if (cfg.sections.wiki) {
+    sectionsHtml += `
+    <section class="card">
+      <h2>📚 Définition Officielle</h2>
+      <div class="wiki-embed">
+        <div class="wiki-embed-header">
+          <div class="wiki-logo">W</div>
+          <span class="wiki-embed-title">Wikipédia — L'encyclopédie libre</span>
+        </div>
+        <div class="wiki-embed-content">
+          <p><strong>${subject}</strong> désigne un ensemble de connaissances, pratiques ou phénomènes constituant un domaine d'étude spécifique. ${cfg.audience === 'enfant' ? 'En gros, c\'est super intéressant et on va t\'expliquer pourquoi !' : 'Ce terme englobe les aspects théoriques et pratiques liés à ce domaine.'}</p>
+        </div>
+        <a href="https://fr.wikipedia.org/wiki/${wikiSlug}" target="_blank" rel="noopener" class="wiki-embed-link">
+          → Lire l'article complet sur Wikipédia
+        </a>
+      </div>
+      
+      <div class="embed-frame">
+        <iframe src="https://fr.m.wikipedia.org/wiki/${wikiSlug}" loading="lazy"></iframe>
+        <a href="https://fr.wikipedia.org/wiki/${wikiSlug}" target="_blank" class="embed-overlay">
+          Ouvrir Wikipédia dans un nouvel onglet ↗
+        </a>
+      </div>
+    </section>`;
+  }
+  
+  // SECTION: Points clés
+  if (cfg.sections.points) {
+    sectionsHtml += `
+    <section class="card">
+      <h2>✅ ${cfg.audience === 'enfant' ? 'Ce qu\'il faut retenir' : 'Points Essentiels'}</h2>
+      <ul class="key-points">
+        <li><strong>Définition :</strong> ${cfg.audience === 'enfant' ? 'C\'est quoi exactement ? On t\'explique simplement !' : 'Compréhension claire et contextualisée du sujet'}</li>
+        <li><strong>Histoire :</strong> ${cfg.audience === 'enfant' ? 'Comment ça a commencé ?' : 'Origines et évolution dans le temps'}</li>
+        <li><strong>Aujourd'hui :</strong> ${cfg.audience === 'enfant' ? 'Pourquoi on en parle maintenant ?' : 'Applications concrètes et enjeux actuels'}</li>
+        <li><strong>Demain :</strong> ${cfg.audience === 'enfant' ? 'Et après, qu\'est-ce qui va se passer ?' : 'Perspectives d\'avenir et développements attendus'}</li>
+        ${cfg.detail === 'complet' || cfg.detail === 'expert' ? `
+        <li><strong>Controverses :</strong> Points de débat et questions ouvertes</li>
+        <li><strong>Acteurs clés :</strong> Personnalités et organisations majeures</li>
+        ` : ''}
+      </ul>
+    </section>`;
+  }
+  
+  // SECTION: Chiffres clés
+  if (cfg.sections.chiffres) {
+    sectionsHtml += `
+    <section class="card">
+      <h2>📊 Chiffres Clés</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number">—</div>
+          <div class="stat-label">Donnée principale</div>
+          <div class="stat-source">Source à compléter</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">—</div>
+          <div class="stat-label">Évolution récente</div>
+          <div class="stat-source">Source à compléter</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">—</div>
+          <div class="stat-label">Projection future</div>
+          <div class="stat-source">Source à compléter</div>
+        </div>
+        ${cfg.detail === 'complet' || cfg.detail === 'expert' ? `
+        <div class="stat-card">
+          <div class="stat-number">—</div>
+          <div class="stat-label">Comparaison internationale</div>
+          <div class="stat-source">Source à compléter</div>
+        </div>
+        ` : ''}
+      </div>
+      <p class="edit-hint">💡 Éditez cette fiche pour ajouter les vrais chiffres !</p>
+    </section>`;
+  }
+  
+  // SECTION: Chronologie
+  if (cfg.sections.timeline) {
+    sectionsHtml += `
+    <section class="card">
+      <h2>📅 ${cfg.audience === 'enfant' ? 'L\'histoire en dates' : 'Chronologie'}</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-date">🕐 Les débuts</div>
+          <div class="timeline-content">${cfg.audience === 'enfant' ? 'Tout a commencé ici...' : 'Premières mentions et développement initial'}</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-date">📈 L'expansion</div>
+          <div class="timeline-content">${cfg.audience === 'enfant' ? 'Ça devient de plus en plus important !' : 'Développement majeur et reconnaissance'}</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-date">🌍 Reconnaissance</div>
+          <div class="timeline-content">${cfg.audience === 'enfant' ? 'Tout le monde en parle maintenant' : 'Institutionnalisation et adoption large'}</div>
+        </div>
+        <div class="timeline-item current">
+          <div class="timeline-date">✨ Aujourd'hui</div>
+          <div class="timeline-content">${cfg.audience === 'enfant' ? 'Voilà où on en est !' : 'État actuel et enjeux contemporains'}</div>
+        </div>
+        ${cfg.detail === 'complet' || cfg.detail === 'expert' ? `
+        <div class="timeline-item future">
+          <div class="timeline-date">🔮 Perspectives</div>
+          <div class="timeline-content">Évolutions attendues et scénarios futurs</div>
+        </div>
+        ` : ''}
+      </div>
+    </section>`;
+  }
+  
+  // SECTION: Pourquoi c'est important
+  if (cfg.sections.pourquoi) {
+    sectionsHtml += `
+    <section class="card highlight-card">
+      <h2>💡 ${cfg.audience === 'enfant' ? 'Pourquoi c\'est important ?' : 'Pourquoi s\'y intéresser ?'}</h2>
+      <div class="importance-grid">
+        <div class="importance-item">
+          <span class="importance-icon">🌍</span>
+          <h3>Impact global</h3>
+          <p>${cfg.audience === 'enfant' ? 'Ça concerne plein de gens dans le monde !' : 'Enjeux à l\'échelle mondiale et interconnexions'}</p>
+        </div>
+        <div class="importance-item">
+          <span class="importance-icon">👤</span>
+          <h3>Au quotidien</h3>
+          <p>${cfg.audience === 'enfant' ? 'Ça peut changer des trucs dans ta vie !' : 'Applications concrètes dans la vie de tous les jours'}</p>
+        </div>
+        <div class="importance-item">
+          <span class="importance-icon">🎯</span>
+          <h3>Pour l'avenir</h3>
+          <p>${cfg.audience === 'enfant' ? 'C\'est important pour demain !' : 'Enjeux pour les générations futures'}</p>
+        </div>
+      </div>
+    </section>`;
+  }
+  
+  // SECTION: Mythes & Réalités
+  if (cfg.sections.myths) {
+    sectionsHtml += `
+    <section class="card">
+      <h2>🔍 ${cfg.audience === 'enfant' ? 'Vrai ou Faux ?' : 'Mythes & Réalités'}</h2>
+      <div class="myths-list">
+        <div class="myth-item">
+          <div class="myth-badge false">❌ FAUX</div>
+          <div class="myth-content">
+            <p class="myth-claim">"[Idée reçue courante à compléter]"</p>
+            <p class="myth-reality"><strong>En réalité :</strong> [Explication factuelle]</p>
+          </div>
+        </div>
+        <div class="myth-item">
+          <div class="myth-badge true">✅ VRAI</div>
+          <div class="myth-content">
+            <p class="myth-claim">"[Affirmation vraie souvent mise en doute]"</p>
+            <p class="myth-reality"><strong>Confirmé :</strong> [Sources et preuves]</p>
+          </div>
+        </div>
+        <div class="myth-item">
+          <div class="myth-badge partial">⚠️ NUANCÉ</div>
+          <div class="myth-content">
+            <p class="myth-claim">"[Affirmation partiellement vraie]"</p>
+            <p class="myth-reality"><strong>C'est plus complexe :</strong> [Nuances à apporter]</p>
+          </div>
+        </div>
+      </div>
+      <p class="edit-hint">💡 Complétez avec les vrais mythes sur ${subject}</p>
+    </section>`;
+  }
+  
+  // SECTION: Glossaire
+  if (cfg.sections.glossaire) {
+    sectionsHtml += `
+    <section class="card">
+      <h2>📖 Glossaire</h2>
+      <div class="glossary">
+        <div class="glossary-item">
+          <dt>[Terme 1]</dt>
+          <dd>Définition à compléter...</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>[Terme 2]</dt>
+          <dd>Définition à compléter...</dd>
+        </div>
+        <div class="glossary-item">
+          <dt>[Terme 3]</dt>
+          <dd>Définition à compléter...</dd>
+        </div>
+      </div>
+      <p class="edit-hint">💡 Ajoutez les termes techniques liés à ${subject}</p>
+    </section>`;
+  }
+  
+  // SECTION: Sources
+  if (cfg.sections.sources) {
+    sectionsHtml += `
+    <section class="card">
+      <h2>🔗 Sources Officielles</h2>
+      <p>${cfg.audience === 'enfant' ? 'Pour en savoir encore plus, demande à un adulte de t\'aider à visiter ces sites :' : 'Consultez ces ressources institutionnelles pour des informations fiables :'}</p>
+      <div class="sources-grid">
+        <a href="https://fr.wikipedia.org/wiki/${wikiSlug}" target="_blank" rel="noopener" class="source-card">
+          <span class="source-icon">📚</span>
+          <div class="source-info">
+            <div class="source-name">Wikipédia</div>
+            <div class="source-type">Encyclopédie</div>
+          </div>
+        </a>
+        <a href="https://www.service-public.fr/particuliers/recherche?keyword=${encodeURIComponent(subject)}" target="_blank" rel="noopener" class="source-card">
+          <span class="source-icon">🏛️</span>
+          <div class="source-info">
+            <div class="source-name">Service Public</div>
+            <div class="source-type">Officiel</div>
+          </div>
+        </a>
+        <a href="https://www.vie-publique.fr/recherche?search_api_fulltext=${encodeURIComponent(subject)}" target="_blank" rel="noopener" class="source-card">
+          <span class="source-icon">🇫🇷</span>
+          <div class="source-info">
+            <div class="source-name">Vie Publique</div>
+            <div class="source-type">Gouvernement</div>
+          </div>
+        </a>
+        <a href="https://scholar.google.com/scholar?q=${encodeURIComponent(subject)}" target="_blank" rel="noopener" class="source-card">
+          <span class="source-icon">🎓</span>
+          <div class="source-info">
+            <div class="source-name">Google Scholar</div>
+            <div class="source-type">Académique</div>
+          </div>
+        </a>
+        ${cfg.detail === 'expert' ? `
+        <a href="https://www.cairn.info/resultats_recherche.php?searchTerm=${encodeURIComponent(subject)}" target="_blank" rel="noopener" class="source-card">
+          <span class="source-icon">📑</span>
+          <div class="source-info">
+            <div class="source-name">Cairn.info</div>
+            <div class="source-type">Revues scientifiques</div>
+          </div>
+        </a>
+        <a href="https://www.persee.fr/search?ta=article&q=${encodeURIComponent(subject)}" target="_blank" rel="noopener" class="source-card">
+          <span class="source-icon">📜</span>
+          <div class="source-info">
+            <div class="source-name">Persée</div>
+            <div class="source-type">Archives scientifiques</div>
+          </div>
+        </a>
+        ` : ''}
+      </div>
+    </section>`;
+  }
+  
+  // SECTION: Quiz
+  if (cfg.sections.quiz) {
+    const quizIntro = cfg.audience === 'enfant' ? 'Teste ce que tu as appris !' : 'Vérifiez vos connaissances :';
+    sectionsHtml += `
+    <section class="card">
+      <h2>🎯 Quiz</h2>
+      <p>${quizIntro}</p>
+      <div class="quiz-area" id="quizArea">
+        <div class="quiz-question" id="quizQuestion">Chargement...</div>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div class="quiz-result" id="quizResult" style="display: none;">
+          <div class="quiz-score" id="quizScore">0/3</div>
+          <p id="quizMessage">Résultat</p>
+          <button class="cta-btn" onclick="resetQuiz()" style="margin-top: 1rem;">🔄 Recommencer</button>
+        </div>
+      </div>
+    </section>`;
+  }
+
+  // Construction du HTML complet
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>${subject} — Fiche Éducative</title>
+  <meta name="description" content="Fiche éducative complète sur ${subject} avec sources officielles">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --primary: #2563eb;
+      --primary-light: #3b82f6;
+      --primary-dark: #1d4ed8;
+      --success: #059669;
+      --warning: #d97706;
+      --error: #dc2626;
+      --bg: #fafafa;
+      --bg-card: #ffffff;
+      --text: #1a1a1a;
+      --text-secondary: #4a4a4a;
+      --text-muted: #717171;
+      --border: rgba(0,0,0,0.1);
+      --radius: 12px;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    
+    header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+    
+    .badge { display: inline-block; padding: 0.25rem 0.75rem; background: rgba(255,255,255,0.2); border-radius: 20px; font-size: 0.75rem; font-weight: 500; margin-bottom: 1rem; }
+    
+    h1 { font-family: 'Merriweather', serif; font-size: clamp(1.75rem, 5vw, 2.5rem); margin-bottom: 0.5rem; }
+    
+    .subtitle { font-size: 1rem; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+    
+    main { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+    
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card h2 { font-family: 'Merriweather', serif; font-size: 1.25rem; color: var(--primary); margin-bottom: 1rem; }
+    .card p { color: var(--text-secondary); margin-bottom: 1rem; }
+    .card .lead { font-size: 1.1rem; line-height: 1.7; }
+    
+    .highlight-card { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-color: #93c5fd; }
+    
+    .context-box { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; margin: 1rem 0; font-size: 0.9rem; }
+    
+    .meta-info { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+    .meta-badge { padding: 0.25rem 0.75rem; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; font-size: 0.75rem; }
+    
+    /* Wiki embed */
+    .wiki-embed { background: #f8f9fa; border: 1px solid #a2a9b1; border-radius: var(--radius); padding: 1rem; margin: 1rem 0; }
+    .wiki-embed-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; padding-bottom: 0.75rem; border-bottom: 1px solid #c8ccd1; }
+    .wiki-logo { width: 24px; height: 24px; background: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.75rem; }
+    .wiki-embed-title { font-weight: 600; color: #202122; }
+    .wiki-embed-content { font-size: 0.9rem; color: #202122; }
+    .wiki-embed-link { display: inline-block; margin-top: 0.75rem; color: #3366cc; text-decoration: none; font-size: 0.85rem; }
+    .wiki-embed-link:hover { text-decoration: underline; }
+    
+    .embed-frame { position: relative; margin-top: 1rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    .embed-frame iframe { width: 100%; height: 300px; border: none; }
+    .embed-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 0.75rem; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; text-align: center; text-decoration: none; font-size: 0.8rem; }
+    
+    /* Key points */
+    .key-points { list-style: none; }
+    .key-points li { padding: 0.75rem 0; padding-left: 2rem; position: relative; border-bottom: 1px solid var(--border); }
+    .key-points li:last-child { border-bottom: none; }
+    .key-points li::before { content: '→'; position: absolute; left: 0; color: var(--primary); font-weight: bold; }
+    
+    /* Stats */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 1rem 0; }
+    .stat-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
+    .stat-number { font-size: 1.75rem; font-weight: 700; color: var(--primary); }
+    .stat-label { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem; }
+    .stat-source { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.5rem; font-style: italic; }
+    
+    /* Timeline */
+    .timeline { position: relative; padding-left: 1.5rem; border-left: 2px solid var(--primary); }
+    .timeline-item { position: relative; padding: 1rem 0; }
+    .timeline-item::before { content: ''; position: absolute; left: -1.75rem; top: 1.25rem; width: 10px; height: 10px; background: var(--primary); border-radius: 50%; }
+    .timeline-item.current::before { background: var(--success); box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.2); }
+    .timeline-item.future::before { background: var(--warning); }
+    .timeline-date { font-size: 0.75rem; font-weight: 600; color: var(--primary); }
+    .timeline-content { margin-top: 0.25rem; color: var(--text-secondary); }
+    
+    /* Importance */
+    .importance-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .importance-item { text-align: center; padding: 1rem; }
+    .importance-icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+    .importance-item h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .importance-item p { font-size: 0.85rem; color: var(--text-secondary); }
+    
+    /* Myths */
+    .myths-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+    .myth-item { display: flex; gap: 1rem; padding: 1rem; background: var(--bg); border-radius: 8px; }
+    .myth-badge { padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; height: fit-content; white-space: nowrap; }
+    .myth-badge.true { background: #d1fae5; color: #065f46; }
+    .myth-badge.false { background: #fee2e2; color: #991b1b; }
+    .myth-badge.partial { background: #fef3c7; color: #92400e; }
+    .myth-claim { font-weight: 500; margin-bottom: 0.5rem; }
+    .myth-reality { font-size: 0.9rem; color: var(--text-secondary); }
+    
+    /* Glossary */
+    .glossary { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+    .glossary-item dt { font-weight: 600; color: var(--primary); }
+    .glossary-item dd { font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem; padding-left: 1rem; border-left: 2px solid var(--border); }
+    
+    /* Sources */
+    .sources-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.75rem; margin-top: 1rem; }
+    .source-card { display: flex; align-items: center; gap: 0.75rem; padding: 0.875rem; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: var(--text); transition: all 0.2s; }
+    .source-card:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1); }
+    .source-icon { font-size: 1.5rem; }
+    .source-name { font-weight: 600; font-size: 0.85rem; }
+    .source-type { font-size: 0.7rem; color: var(--text-muted); }
+    
+    /* Quiz */
+    .quiz-area { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: var(--radius); padding: 1.5rem; margin: 1rem 0; }
+    .quiz-question { font-weight: 600; margin-bottom: 1rem; }
+    .quiz-options { display: grid; gap: 0.5rem; }
+    .quiz-option { padding: 0.75rem 1rem; background: white; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: left; font-size: 0.9rem; }
+    .quiz-option:hover { border-color: var(--primary); background: #f0f9ff; }
+    .quiz-option.correct { background: #d1fae5; border-color: var(--success); }
+    .quiz-option.wrong { background: #fee2e2; border-color: var(--error); }
+    .quiz-result { margin-top: 1rem; padding: 1rem; background: white; border-radius: 8px; text-align: center; }
+    .quiz-score { font-size: 2rem; font-weight: 700; color: var(--primary); }
+    
+    .cta-btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1.5rem; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+    .cta-btn:hover { background: var(--primary-light); }
+    
+    .edit-hint { font-size: 0.8rem; color: var(--text-muted); font-style: italic; margin-top: 1rem; padding: 0.75rem; background: #fef3c7; border-radius: 6px; }
+    
+    footer { text-align: center; padding: 2rem; color: var(--text-muted); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+    footer a { color: var(--primary); text-decoration: none; }
+    
+    @media print {
+      header { background: var(--primary) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .embed-frame, .quiz-area, .cta-btn, .edit-hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="badge">📚 Fiche Éducative — PéTAL OS v329.2</div>
+    <h1>${subject}</h1>
+    <p class="subtitle">${aud.intro} ce sujet avec un contenu ${tone.style}</p>
+  </header>
+  
+  <main>
+    ${sectionsHtml}
+    
+    <section class="card">
+      <h2>📥 Actions</h2>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.75rem;">
+        <button class="cta-btn" onclick="window.print()">🖨️ Imprimer</button>
+        <a href="https://fr.wikipedia.org/wiki/${wikiSlug}" target="_blank" class="cta-btn" style="text-decoration: none;">📚 Voir sur Wikipédia</a>
+      </div>
+    </section>
+  </main>
+  
+  <footer>
+    <p>Généré par <strong>PéTAL OS v329.2</strong> — Version Grand Public</p>
+    <p style="margin-top: 0.25rem;">Public : ${cfg.audience} • Niveau : ${cfg.detail} • Ton : ${cfg.tone}</p>
+    <p style="margin-top: 0.5rem;"><a href="https://fr.wikipedia.org" target="_blank">Wikipédia</a> • <a href="https://www.service-public.fr" target="_blank">Service-Public.fr</a></p>
+    <p style="margin-top: 0.25rem; font-size: 0.7rem;">Généré le ${now.toLocaleDateString('fr-FR')} à ${now.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}</p>
+  </footer>
+  
+  ${cfg.sections.quiz ? `
+  <script>
+    const quizData = [
+      { question: "Pourquoi vérifier ses sources est-il important ?", options: ["Pour éviter les fake news", "Ce n'est pas nécessaire", "Uniquement pour l'école", "Les réseaux sociaux suffisent"], correct: 0 },
+      { question: "Quelle source est la plus fiable ?", options: ["Un post viral", "Un site .gouv.fr", "Un blog", "Un email"], correct: 1 },
+      { question: "Comment approfondir un sujet ?", options: ["Premier résultat Google", "Croiser plusieurs sources officielles", "Une seule source suffit", "Ignorer les sources académiques"], correct: 1 }
+    ];
+    let currentQuestion = 0, score = 0, answered = false;
+    
+    function loadQuestion() {
+      if (currentQuestion >= quizData.length) { showResult(); return; }
+      const q = quizData[currentQuestion];
+      document.getElementById('quizQuestion').textContent = q.question;
+      document.getElementById('quizOptions').innerHTML = q.options.map((opt, i) => 
+        '<button class="quiz-option" onclick="checkAnswer(' + i + ')">' + opt + '</button>'
+      ).join('');
+      answered = false;
+    }
+    
+    function checkAnswer(index) {
+      if (answered) return;
+      answered = true;
+      const q = quizData[currentQuestion];
+      document.querySelectorAll('.quiz-option').forEach((opt, i) => {
+        if (i === q.correct) opt.classList.add('correct');
+        else if (i === index) opt.classList.add('wrong');
+        opt.style.pointerEvents = 'none';
+      });
+      if (index === q.correct) score++;
+      setTimeout(() => { currentQuestion++; loadQuestion(); }, 1200);
+    }
+    
+    function showResult() {
+      document.getElementById('quizQuestion').style.display = 'none';
+      document.getElementById('quizOptions').style.display = 'none';
+      document.getElementById('quizResult').style.display = 'block';
+      document.getElementById('quizScore').textContent = score + '/' + quizData.length;
+      document.getElementById('quizMessage').textContent = score === quizData.length ? '🎉 Parfait !' : score >= 2 ? '👍 Bien joué !' : '📚 Relisez la fiche';
+    }
+    
+    function resetQuiz() {
+      currentQuestion = 0; score = 0;
+      document.getElementById('quizQuestion').style.display = 'block';
+      document.getElementById('quizOptions').style.display = 'grid';
+      document.getElementById('quizResult').style.display = 'none';
+      loadQuestion();
+    }
+    
+    loadQuestion();
+  <\\/script>
+  ` : ''}
+</body>
+</html>`;
+
+  return {
+    subject,
+    date: now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    type: `${aud.emoji} ${cfg.audience}`,
+    level: cfg.detail,
+    sections: Object.values(cfg.sections).filter(Boolean).length,
+    quizQuestions: cfg.sections.quiz ? 3 : 0,
+    sources,
+    html
+  };
+}
+```
+
+---
+
+## 📍 RÉSUMÉ — OÙ METTRE QUOI
+
+| Bloc | Où le mettre |
+|------|--------------|
+| **1️⃣ Module echo description** | Remplace l'objet avec `id: 'echo'` dans `MODULES` |
+| **2️⃣ CSS personnalisation** | À la fin du `<style>`, avant `</style>` |
+| **3️⃣ userConfig + updateConfig()** | Après `let currentEditIndex = -1;` |
+| **4️⃣ generateOfficialSite()** | Remplace l'ancienne fonction du même nom |
+
+---
+
+## ✨ Ce que tu peux personnaliser maintenant :
+
+1. **Public cible** : Enfants → Experts (adapte le ton et vocabulaire)
+2. **Niveau de détail** : Essentiel (5 min) → Expert (30+ min)
+3. **Ton** : Ludique, Pédagogique, Académique, Journalistique
+4. **Sections** : Coche/décoche ce que tu veux inclure
+5. **Contexte perso** : "Pour un cours de SVT en 3ème" → s'affiche dans la fiche
+
+Tu veux que je te fasse le fichier complet assemblé ? 🎯
